@@ -1,0 +1,2 @@
+# Mimir
+Master thesis repository
