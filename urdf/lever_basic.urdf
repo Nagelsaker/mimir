@@ -1,0 +1,130 @@
+<?xml version="1.0"?>
+<robot name="lever_basic">
+  <gazebo reference="world">
+  </gazebo>
+  <gazebo reference="base_link_casing">
+    <kp>1000000.0</kp>
+    <kd>100.0</kd>
+    <mu1>30.0</mu1>
+    <mu2>30.0</mu2>
+    <maxVel>1.0</maxVel>
+    <minDepth>0.001</minDepth>
+    <material>Gazebo/DarkGrey</material>
+  </gazebo>
+  <gazebo reference="base_link_squares">
+    <kp>1000000.0</kp>
+    <kd>100.0</kd>
+    <mu1>30.0</mu1>
+    <mu2>30.0</mu2>
+    <maxVel>1.0</maxVel>
+    <minDepth>0.001</minDepth>
+    <material>Gazebo/DarkGrey</material>
+  </gazebo>
+  <gazebo reference="lever_link">
+    <kp>1000000.0</kp>
+    <kd>100.0</kd>
+    <mu1>30.0</mu1>
+    <mu2>30.0</mu2>
+    <maxVel>1.0</maxVel>
+    <minDepth>0.001</minDepth>
+    <material>Gazebo/DarkGrey</material>
+  </gazebo>
+  <gazebo>
+    <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
+      <robotNamespace>/lever_basic</robotNamespace>
+      <robotParam>/lever_basic/robot_description</robotParam>
+    </plugin>
+  </gazebo>
+  <material name="light_gray">
+    <color rgba="0.9 0.9 0.9 1"/>
+  </material>
+  <material name="black">
+    <color rgba="0 0 0 1"/>
+  </material>
+  <material name="white">
+    <color rgba="1 1 1 1"/>
+  </material> 
+  <link name="world">
+  </link>
+  <link name="base_link_casing">
+    <visual>
+        <geometry>
+          <mesh filename="package://open_manipulator_rl_environments/meshes/base-casing.stl" scale="0.059 0.059 0.059"/>
+        </geometry>
+        <material name="light_gray"/>
+    </visual>
+    <collision>
+      <geometry>
+          <mesh filename="package://open_manipulator_rl_environments/meshes/base-casing.stl" scale="0.059 0.059 0.059"/>
+      </geometry>
+    </collision>
+  </link>
+  <link name="base_link_squares">
+    <contact>
+      <lateral_friction value="1.0"/>
+      <inertia_scaling value="3.0"/>
+    </contact>
+    <visual>
+        <geometry>
+          <mesh filename="package://open_manipulator_rl_environments/meshes/base-squares-only.stl" scale="0.059 0.059 0.059"/>
+        </geometry>
+        <material name="black"/>
+    </visual>
+    <collision>
+      <geometry>
+          <mesh filename="package://open_manipulator_rl_environments/meshes/base-squares-only.stl" scale="0.059 0.059 0.059"/>
+      </geometry>
+    </collision>
+  </link>
+  <link name="lever_link">
+    <contact>
+      <lateral_friction value="1.0"/>
+      <rolling_friction value="0.0"/>
+      <stiffness value="30000"/>
+      <damping value="1000"/>
+    </contact>
+    <visual>
+        <geometry>
+          <mesh filename="package://open_manipulator_rl_environments/meshes/lever-arm-colored.stl" scale="0.059 0.059 0.059"/>
+        </geometry>
+        <material name="black"/>
+    </visual>
+    <collision>
+      <geometry>
+          <mesh filename="package://open_manipulator_rl_environments/meshes/lever-arm-colored.stl" scale="0.059 0.059 0.059"/>
+      </geometry>
+    </collision>
+    <contact_coefficients>
+      <mu1 value="5.5"/>
+      <mu2 value="5.5"/>
+      <kp value="0.5"/>
+      <kd value="0.5"/>
+    </contact_coefficients>
+  </link>
+  <!-- Can possibly add an offset to this to account for that the origin of the rest is not the bottom of lever-->
+  <joint name="world_fixed" type="fixed">
+    <origin rpy="0 0 0" xyz="0 0 0.015"/>
+    <parent link="world"/>
+    <child link="base_link_casing"/>
+  </joint>
+  <joint name="casing_to_squares" type="fixed">
+    <parent link="base_link_casing"/>
+  <child link="base_link_squares"/>
+  </joint>
+  <joint name="squares_to_lever" type="revolute">
+    <axis xyz="0 1 0"/>
+    <limit effort="1000.0" lower="-1.57" upper="1.57" velocity="0.5"/>
+    <parent link="base_link_squares"/>
+    <child link="lever_link"/>
+  </joint>
+  <transmission name="tran1">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="squares_to_lever">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="motor1">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+</robot>

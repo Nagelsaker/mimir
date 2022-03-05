@@ -2,7 +2,9 @@ import torch
 from models import actor
 from arguments import get_args
 import gym
+import rospy
 import numpy as np
+from open_manipulator_rl_environments.task_environments.lever_pull_task import OpenManipulatorLeverPullEnvironment
 
 # process the inputs
 def process_inputs(o, g, o_mean, o_std, g_mean, g_std, args):
@@ -15,12 +17,14 @@ def process_inputs(o, g, o_mean, o_std, g_mean, g_std, args):
     return inputs
 
 if __name__ == '__main__':
+    rospy.init_node('test_net_node')
     args = get_args()
     # load the model param
     model_path = args.save_dir + args.env_name + '/model.pt'
     o_mean, o_std, g_mean, g_std, model = torch.load(model_path, map_location=lambda storage, loc: storage)
     # create the environment
-    env = gym.make(args.env_name)
+    # env = gym.make(args.env_name)
+    env = gym.make("OpenManipulator_lever_pull_task-v0")
     # get the env param
     observation = env.reset()
     # get the environment params
@@ -39,7 +43,7 @@ if __name__ == '__main__':
         obs = observation['observation']
         g = observation['desired_goal']
         for t in range(env._max_episode_steps):
-            env.render()
+            # env.render()
             inputs = process_inputs(obs, g, o_mean, o_std, g_mean, g_std, args)
             with torch.no_grad():
                 pi = actor_network(inputs)
