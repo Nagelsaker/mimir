@@ -1,12 +1,16 @@
 import numpy as np
 import gym
 import rospy
+import mujoco_py
 import os, sys, time
+from gym.envs.mujoco.mujoco_env import MujocoEnv
 from arguments import get_args
 from mpi4py import MPI
 from subprocess import CalledProcessError
 from ddpg_agent import ddpg_agent
-from open_manipulator_rl_environments.task_environments.lever_pull_task import OpenManipulatorLeverPullEnvironment
+
+# Important! Does not work without including the environment
+from open_manipulator_rl_environments.task_environments.lever_pull_task_mujoco import OpenManipulatorMujocoLeverPullEnvironment
 
 """
 train the agent, the MPI part code is copy from openai baselines(https://github.com/openai/baselines/blob/master/baselines/her)
@@ -25,22 +29,15 @@ def get_env_params(env):
 
 def launch(args):
     # env = OpenManipulatorLeverPullEnvironment()
-    env = gym.make("OpenManipulator_lever_pull_task-v0")
+    env = gym.make("OpenManipulator_lever_pull_task_mujoco-v0")
+    # env = MujocoEnv("/home/simon/catkin_ws/src/open_manipulator_rl_environments/xml/open_manipulator_and_lever.xml", 1)
     rospy.loginfo("LOADED!")
-    # get the environment parameters
     env_params = get_env_params(env)
 
-    # create the ddpg_agent
-    # create the ddpg agent to interact with the environment 
     ddpg_trainer = ddpg_agent(args, env, env_params)
     ddpg_trainer.learn()
 
 if __name__ == '__main__':
     rospy.init_node('train_net_node')
-    # take the configuration for the HER
-    # os.environ['OMP_NUM_THREADS'] = '2'
-    # os.environ['MKL_NUM_THREADS'] = '2'
-    # os.environ['IN_MPI'] = '1'
-    # get the params
     args = get_args()
     launch(args)

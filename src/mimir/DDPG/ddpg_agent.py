@@ -60,22 +60,17 @@ class ddpg_agent:
         train the network
 
         """
-        grabLever = True
         # start to collect samples
         for epoch in range(self.args.n_epochs):
-            for _ in range(self.args.n_cycles):
+            print(f"Epoch: {epoch}")
+            for cycle in range(self.args.n_cycles):
+                print(f"Cycle: {cycle}")
                 mb_obs, mb_ag, mb_g, mb_actions = [], [], [], []
                 for _ in range(self.args.num_rollouts_per_mpi):
                     # reset the rollouts
                     ep_obs, ep_ag, ep_g, ep_actions = [], [], [], []
                     # reset the environment
                     observation = self.env.reset()
-                    # if grabLever:
-                    #     self.env._init_grasping_position()
-                    #     observation = self.env._get_obs()
-                    #     grabLever = False
-                    # else:
-                    #     grabLever = True
                     obs = observation['observation']
                     ag = observation['achieved_goal']
                     g = observation['desired_goal']
