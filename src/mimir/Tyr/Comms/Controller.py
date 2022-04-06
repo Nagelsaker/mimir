@@ -403,7 +403,7 @@ class Controller():
         '''
         Method which disconnects from the OpenManipulator in an orderly fashion.
         '''
-        self.poseSubscriber.destroy_node()
+        # self.poseSubscriber.destroy_node()
         # rclpy.shutdown()
         rospy.signal_shutdown()
 

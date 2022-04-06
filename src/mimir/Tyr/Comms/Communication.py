@@ -208,8 +208,6 @@ class PoseSubscriber(rospy.Subscriber):
         self.pose={"position": {"x" : 0.1, "y" : 0.0, "z" : 0.0},
                                 "orientation": {"x": 0.0, "y": 0.0, "z": 0.0, "w" : 1.0}}
 
-        rospy.init_node('pose_subscriber')
-        # rospy.spin()
 
     def listener_callback(self, msg):
         '''

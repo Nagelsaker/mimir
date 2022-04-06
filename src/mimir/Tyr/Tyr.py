@@ -7,7 +7,7 @@ import qdarkstyle
 if __name__ == "__main__":
     app = QApplication(sys.argv)
 
-    darkStylesheet = qdarkstyle.load_stylesheet_pyqt()
+    darkStylesheet = qdarkstyle.load_stylesheet_pyqt5()
     app.setStyleSheet(darkStylesheet)
     
     window = MainWindow()

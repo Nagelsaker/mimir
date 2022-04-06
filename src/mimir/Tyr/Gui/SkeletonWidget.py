@@ -3,6 +3,7 @@ from PyQt5.QtCore import QSize
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
+from mpl_toolkits.mplot3d import Axes3D
 from Utility.utils import generateFilename
 import numpy as np
 import json

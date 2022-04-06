@@ -1,6 +1,6 @@
 import cv2
 import glob
-import rclpy
+import rospy
 import numpy as np
 import mediapipe as mp
 from pathlib import Path
@@ -208,12 +208,11 @@ def depthDemonstration():
 
     Made for debugging purposes
     '''
-    rclpy.init()
+    rospy.init_node('depth_demonstration_node')
     handTracker = HandTracking()
     positionClient = SetPositionClient()
     poseSubscriber = PoseSubscriber()
     
-    rclpy.spin_once(poseSubscriber) # Update pose
     pose = poseSubscriber.getPose()
 
     minDepth = 0.25
@@ -242,14 +241,14 @@ def depthDemonstration():
         print("\nExiting..")
         handTracker.endStream() # Remember to end the stream
         poseSubscriber.destroy_node()
-        rclpy.shutdown()
+        rospy.signal_shutdown()
 
 
 def fullControlSimple():
     '''
     Made for debugging purposes
     '''
-    rclpy.init()
+    rospy.init_node('full_control_simple_node')
     handTracker = HandTracking()
     positionClient = SetPositionClient()
     poseSubscriber = PoseSubscriber()
@@ -263,12 +262,10 @@ def fullControlSimple():
     handTracker.startStream()
     prevHandDepth = minDepth
 
-    rclpy.spin_once(poseSubscriber) # Update pose
     prevPose = poseSubscriber.getPose()
     z = prevPose["position"]["z"]
     try:
         while True: # Tracking loop
-            rclpy.spin_once(poseSubscriber) # Update pose
             currentPose = poseSubscriber.getPose()
             handDepth, handPosition,_,_ = handTracker.getLiveLandamarks()
 
@@ -287,4 +284,4 @@ def fullControlSimple():
         print("\nExiting..")
         handTracker.endStream() # Remember to end the stream
         poseSubscriber.destroy_node()
-        rclpy.shutdown()
+        rospy.signal_shutdown()
