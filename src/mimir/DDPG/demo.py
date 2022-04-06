@@ -4,7 +4,7 @@ from arguments import get_args
 import gym
 import rospy
 import numpy as np
-from open_manipulator_rl_environments.task_environments.lever_pull_task import OpenManipulatorLeverPullEnvironment
+from open_manipulator_rl_environments.task_environments.lever_pull_task_mujoco import OpenManipulatorMujocoLeverPullEnvironment
 
 # process the inputs
 def process_inputs(o, g, o_mean, o_std, g_mean, g_std, args):
@@ -20,11 +20,11 @@ if __name__ == '__main__':
     rospy.init_node('test_net_node')
     args = get_args()
     # load the model param
-    model_path = args.save_dir + args.env_name + '/model.pt'
+    model_path = args.save_dir + args.env_name + '/model_first_working.pt'
     o_mean, o_std, g_mean, g_std, model = torch.load(model_path, map_location=lambda storage, loc: storage)
     # create the environment
     # env = gym.make(args.env_name)
-    env = gym.make("OpenManipulator_lever_pull_task-v0")
+    env = gym.make("OpenManipulator_lever_pull_task_mujoco-v0")
     # get the env param
     observation = env.reset()
     # get the environment params

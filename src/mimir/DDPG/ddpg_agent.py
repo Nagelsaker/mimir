@@ -62,9 +62,9 @@ class ddpg_agent:
         """
         # start to collect samples
         for epoch in range(self.args.n_epochs):
-            print(f"Epoch: {epoch}")
+            print(f"\nEpoch: {epoch}")
             for cycle in range(self.args.n_cycles):
-                print(f"Cycle: {cycle}")
+                print(f"\nCycle: {cycle}")
                 mb_obs, mb_ag, mb_g, mb_actions = [], [], [], []
                 for _ in range(self.args.num_rollouts_per_mpi):
                     # reset the rollouts
@@ -81,7 +81,7 @@ class ddpg_agent:
                             pi = self.actor_network(input_tensor)
                             action = self._select_actions(pi)
                         # feed the actions into the environment
-                        observation_new, _, _, info = self.env.step(action)
+                        observation_new, reward, done, info = self.env.step(action)
                         obs_new = observation_new['observation']
                         ag_new = observation_new['achieved_goal']
                         # append rollouts
@@ -92,6 +92,12 @@ class ddpg_agent:
                         # re-assign the observation
                         obs = obs_new
                         ag = ag_new
+                        # if info["is_success"] == 1.0:
+                        #     # Append  terminal state
+                        #     ep_obs.append(obs_new.copy())
+                        #     ep_ag.append(ag_new.copy())
+                        #     ep_g.append(g.copy())
+                        #     break
                     ep_obs.append(obs.copy())
                     ep_ag.append(ag.copy())
                     mb_obs.append(ep_obs)
@@ -113,11 +119,24 @@ class ddpg_agent:
                 self._soft_update_target_network(self.actor_target_network, self.actor_network)
                 self._soft_update_target_network(self.critic_target_network, self.critic_network)
             # start to do the evaluation
-            success_rate = self._eval_agent()
+            success_rate, avg_reward = self._eval_agent()
+            self.save_training_meta_data(success_rate, avg_reward)
             if MPI.COMM_WORLD.Get_rank() == 0:
                 print('[{}] epoch is: {}, eval success rate is: {:.3f}'.format(datetime.now(), epoch, success_rate))
                 torch.save([self.o_norm.mean, self.o_norm.std, self.g_norm.mean, self.g_norm.std, self.actor_network.state_dict()], \
                             self.model_path + '/model.pt')
+
+    def save_training_meta_data(self, success_rate, avg_reward):
+        path_to_metadata = f"{os.path.dirname(os.path.abspath(__file__))}/meta_data/success_reward.npy"
+        if not os.path.isfile(path_to_metadata):
+            meta = np.array([success_rate, avg_reward])
+            np.save(path_to_metadata, meta)
+        else:
+            meta = np.load(path_to_metadata)
+            temp = np.vstack([meta, [success_rate, avg_reward]])
+            meta = temp
+            np.save(path_to_metadata, meta)
+        
 
     # pre_process the inputs
     def _preproc_inputs(self, obs, g):
@@ -237,6 +256,7 @@ class ddpg_agent:
     # do the evaluation
     def _eval_agent(self):
         total_success_rate = []
+        rewards = []
         for _ in range(self.args.n_test_rollouts):
             per_success_rate = []
             observation = self.env.reset()
@@ -248,12 +268,14 @@ class ddpg_agent:
                     pi = self.actor_network(input_tensor)
                     # convert the actions
                     actions = pi.detach().cpu().numpy().squeeze()
-                observation_new, _, _, info = self.env.step(actions)
+                observation_new, reward, _, info = self.env.step(actions)
                 obs = observation_new['observation']
                 g = observation_new['desired_goal']
                 per_success_rate.append(info['is_success'])
+                rewards.append(reward)
             total_success_rate.append(per_success_rate)
+        avg_reward = np.sum(rewards) / (self.env_params['max_timesteps'] + self.args.n_test_rollouts)
         total_success_rate = np.array(total_success_rate)
         local_success_rate = np.mean(total_success_rate[:, -1])
         global_success_rate = MPI.COMM_WORLD.allreduce(local_success_rate, op=MPI.SUM)
-        return global_success_rate / MPI.COMM_WORLD.Get_size()
+        return global_success_rate / MPI.COMM_WORLD.Get_size(), avg_reward
