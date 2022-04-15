@@ -37,18 +37,18 @@ def launch(args):
     ddpg_trainer = ddpg_agent(args, env, env_params)
     ddpg_trainer.learn()
 
-def visualizeTraining(idx):
+def visualizeTraining(idx, name):
     import matplotlib.pyplot as plt
-    path_to_metadata = f"{os.path.dirname(os.path.abspath(__file__))}/meta_data/success_reward.npy"
+    path_to_metadata = f"{os.path.dirname(os.path.abspath(__file__))}/meta_data/success_reward{name}.npy"
     meta = np.load(path_to_metadata)
     plt.plot(meta[:,idx])
     plt.show()
 
 if __name__ == '__main__':
     rospy.init_node('train_net_node')
-    args = get_args()
-    launch(args)
+    #args = get_args()
+    #launch(args)
     #print(f"{int(sys.argv[1])}")
-    #visualizeTraining(int(sys.argv[1]))
+    visualizeTraining(int(sys.argv[1]), sys.argv[2])
     
 
