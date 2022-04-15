@@ -55,7 +55,7 @@ class ddpg_agent:
             if not os.path.exists(self.model_path):
                 os.mkdir(self.model_path)
 
-    def learn(self):
+    def learn(self, successThreshold=0.01):
         """
         train the network
 
@@ -125,6 +125,10 @@ class ddpg_agent:
                 print('[{}] epoch is: {}, eval success rate is: {:.3f}'.format(datetime.now(), epoch, success_rate))
                 torch.save([self.o_norm.mean, self.o_norm.std, self.g_norm.mean, self.g_norm.std, self.actor_network.state_dict()], \
                             self.model_path + '/model.pt')
+                if success_rate > successThreshold:
+                    print(f"Success rate is larger than {successThreshold}, ending training at epoch {epoch}")
+                    break
+
 
     def save_training_meta_data(self, success_rate, avg_reward):
         path_to_metadata = f"{os.path.dirname(os.path.abspath(__file__))}/meta_data/success_reward.npy"
