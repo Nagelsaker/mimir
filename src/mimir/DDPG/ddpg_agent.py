@@ -14,7 +14,7 @@ ddpg with HER (MPI-version)
 
 """
 class ddpg_agent:
-    def __init__(self, args, env, env_params):
+    def __init__(self, args, env, env_params, load_model_path=None):
         self.args = args
         self.env = env
         self.env_params = env_params
@@ -46,6 +46,18 @@ class ddpg_agent:
         # create the normalizer
         self.o_norm = normalizer(size=env_params['obs'], default_clip_range=self.args.clip_range)
         self.g_norm = normalizer(size=env_params['goal'], default_clip_range=self.args.clip_range)
+
+        if load_model_path is not None:
+            # Load pytorch model from load_model_path, and update the target network
+            print(f"Loading model from {load_model_path}")
+            model = torch.load(load_model_path)
+            self.o_norm.mean = model[0]
+            self.o_norm.std = model[1]
+            self.g_norm.mean = model[2]
+            self.g_norm.std = model[3]
+            self.actor_network.load_state_dict(model[4])
+
+
         # create the dict for store the model
         if MPI.COMM_WORLD.Get_rank() == 0:
             if not os.path.exists(self.args.save_dir):
@@ -55,7 +67,7 @@ class ddpg_agent:
             if not os.path.exists(self.model_path):
                 os.mkdir(self.model_path)
 
-    def learn(self, successThreshold=0.01):
+    def learn(self, early_stopping_threshold):
         """
         train the network
 
@@ -125,8 +137,8 @@ class ddpg_agent:
                 print('[{}] epoch is: {}, eval success rate is: {:.3f}'.format(datetime.now(), epoch, success_rate))
                 torch.save([self.o_norm.mean, self.o_norm.std, self.g_norm.mean, self.g_norm.std, self.actor_network.state_dict()], \
                             self.model_path + '/model.pt')
-                if success_rate > successThreshold:
-                    print(f"Success rate is larger than {successThreshold}, ending training at epoch {epoch}")
+                if success_rate > early_stopping_threshold:
+                    print(f"Success rate is larger than {early_stopping_threshold}, ending training at epoch {epoch}")
                     break
 
 

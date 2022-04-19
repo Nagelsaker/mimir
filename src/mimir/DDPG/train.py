@@ -34,8 +34,12 @@ def launch(args):
     rospy.loginfo("LOADED!")
     env_params = get_env_params(env)
 
+    # load_model_path = f"{os.path.dirname(os.path.abspath(__file__))}/saved_models/OpenManipulator_lever_pull_task-v0/model.pt"
+
     ddpg_trainer = ddpg_agent(args, env, env_params)
-    ddpg_trainer.learn()
+    ddpg_trainer.learn(early_stopping_threshold=0.7)
+    # success_rate, avg_reward = ddpg_trainer._eval_agent()
+    # print(f"success rate: {success_rate}, avg reward: {avg_reward}")
 
 def visualizeTraining(idx):
     import matplotlib.pyplot as plt
