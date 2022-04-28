@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<launch>
+
+    <arg name="config_file" default="$(find mimir)config/lever_pose_estimator_parameters.yaml" />
+
+
+
+
+    <node pkg="mimir" type="pose_publisher.py" name="lever_pose" output="screen"/>
+        <group ns="mimir">
+        	<rosparam file="$(arg config_file)" command="load" />
+        </group>
+</launch>

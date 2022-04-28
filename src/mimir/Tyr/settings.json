@@ -4,6 +4,7 @@
     "imgWidth": 1920,
     "imgHeight": 1080,
     "camSN": "836612072676",
+    "eff_cam_sn": "838212074315",
     "useDepth": 1,
     "pathToDataset": "data/dataset1/",
     "pathToLog": "log/",
@@ -13,6 +14,8 @@
     "wristAngle_threshold": [-10, 15],
     "thumbAngle_threshold": [-15, -15],
     "fingerAngle_threshold": 25,
+    "udp_ip": "10.42.0.1",
+    "udp_port": 20000,
     "floor": {
         "zRange": [-99, 0.035]
     },

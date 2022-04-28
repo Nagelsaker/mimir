@@ -62,15 +62,15 @@ class HandTracking:
             results: mpHands.Hands.process
         '''
         with self.mpHands.Hands(static_image_mode=False, min_detection_confidence=0.5, min_tracking_confidence=0.5) as hands:
-            images = self.camStream.getAlignedImages(clippingDistanceInMeters=0)
-            if np.all(images == -1):
+            colorImage, depthImage = self.camStream.getAlignedImages(clippingDistanceInMeters=0)
+            if np.all(colorImage == -1):
                 return -1 # Empty frames
             
-            imgHeight = images.shape[0]
-            imgWidth = int(images.shape[1] / 2)
+            imgHeight = colorImage.shape[0]
+            imgWidth = colorImage.shape[1]
 
-            colorImage = images[:, :imgWidth, :]
-            depthImage = images[:, imgWidth:, :]
+            # colorImage = images[:, :imgWidth, :]
+            # depthImage = images[:, imgWidth:, :]
 
             # Convert the BGR image to RGB.
             image = cv2.cvtColor(colorImage.astype("uint8"), cv2.COLOR_BGR2RGB)

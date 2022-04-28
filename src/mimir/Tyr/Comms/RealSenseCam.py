@@ -65,8 +65,10 @@ class CameraStream:
 
         # depthColormap = cv2.applyColorMap(cv2.convertScaleAbs(depthImage, alpha=0.03), cv2.COLORMAP_JET)
 
-        images = np.hstack((colorImage, depthImage))
-        return images
+        # images = np.hstack((colorImage, depthImage))
+        # return images
+        return colorImage, depthImage
+
 
     def getAlignedImages(self, clippingDistanceInMeters=0):
         '''
@@ -106,8 +108,9 @@ class CameraStream:
 
         depthImgInMeter = (depthImage3d * self.depthScale)
 
-        images = np.hstack((colorImage, depthImgInMeter))
-        return images
+        # images = np.hstack((colorImage, depthImgInMeter))
+        # return images
+        return colorImage, depthImgInMeter
     
     def getColorMap(self, depthImage):
         '''

@@ -11,6 +11,7 @@ from ddpg_agent import ddpg_agent
 
 # Important! Does not work without including the environment
 from open_manipulator_rl_environments.task_environments.lever_pull_task_mujoco import OpenManipulatorMujocoLeverPullEnvironment
+from open_manipulator_rl_environments.task_environments.lever_pull_task import OpenManipulatorLeverPullEnvironment
 
 """
 train the agent, the MPI part code is copy from openai baselines(https://github.com/openai/baselines/blob/master/baselines/her)
@@ -30,14 +31,15 @@ def get_env_params(env):
 def launch(args):
     # env = OpenManipulatorLeverPullEnvironment()
     env = gym.make("OpenManipulator_lever_pull_task_mujoco-v0")
+    # env = gym.make("OpenManipulator_lever_pull_task-v0")
     # env = gym.make("Pendulum-v1")
     rospy.loginfo("LOADED!")
     env_params = get_env_params(env)
 
-    # load_model_path = f"{os.path.dirname(os.path.abspath(__file__))}/saved_models/OpenManipulator_lever_pull_task-v0/model.pt"
+    load_model_path = f"{os.path.dirname(os.path.abspath(__file__))}/saved_models/OpenManipulator_lever_pull_task-v0/model.pt"
 
-    ddpg_trainer = ddpg_agent(args, env, env_params)
-    ddpg_trainer.learn(early_stopping_threshold=0.7)
+    ddpg_trainer = ddpg_agent(args, env, env_params, load_model_path)
+    ddpg_trainer.learn(early_stopping_threshold=0.85)
     # success_rate, avg_reward = ddpg_trainer._eval_agent()
     # print(f"success rate: {success_rate}, avg reward: {avg_reward}")
 
