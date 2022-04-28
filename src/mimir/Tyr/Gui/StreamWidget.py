@@ -1,6 +1,7 @@
 import time
 import json
 import cv2
+import rospy
 from PyQt5.QtWidgets import  QWidget, QLabel
 from PyQt5.QtCore import QThread, pyqtSignal, QSize, pyqtSlot
 from PyQt5.QtGui import QImage, QPixmap
@@ -39,9 +40,7 @@ class Stream(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        f = open("settings.json")
-        settings = json.load(f)
-        self.pathToDataset = settings["pathToDataset"]
+        self.pathToDataset = rospy.get_param("/mimir/path_to_dataset")
 
         # create a label
         self.label = QLabel(self)

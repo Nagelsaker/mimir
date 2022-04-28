@@ -1,0 +1,26 @@
+depth_range: [0.44, 0.72]
+path_time: 0.6
+img_width: 1920
+img_height: 1080
+sn_cam: "836612072676"
+sn_eff_cam: "838212074315"
+use_depth: True
+path_to_dataset: "data/dataset1/"
+path_to_log: "log/"
+write_logs: False
+advanced_use: True
+Kp_default: [0.20, 0.05, 0.07, 0.15, 0.17453292519943295]
+threshold_angle_wrist: [-10, 15]
+threshold_angle_thumb: [-15, -15]
+threshold_angle_finger: 25
+udp_ip: "10.42.0.1"
+udp_port: 20000
+ob_floor: { "zRange": [-99, 0.035] }
+ob_ceiling: { "zRange": [0.456, 99] }
+ob_inner_cylinder: { "radiusRange" : [0, 0.06] }
+ob_outer_cylinder: { "radiusRange" : [0.386, 99] }
+ob_motor:  {
+        "xRange": [0.185, 99],
+        "yRange": [-0.12, 0.05],
+        "zRange": [-99, 0.095]
+        }

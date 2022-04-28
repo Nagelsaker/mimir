@@ -1,6 +1,6 @@
 import json
 import cv2
-import os
+import os, sys
 import numpy as np
 import mediapipe as mp
 from scipy.spatial.transform import Rotation as R
@@ -134,8 +134,13 @@ def loadWorkspace():
         workspaceOverlay: (1920 x 1080 x 3) Array(Float)
         workSpaceSections: Dict: (1920 x 1080) Array(Bool)
     '''
-    workspaceSections = loadDictFromJSON("data/ws_section")
-    workspaceOverlay = cv2.imread("data/ws_overlay.jpg")
+    path_ws_section = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../data/ws_section")
+    path_ws_overlay = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../data/ws_overlay.jpg")
+
+
+    # workspaceSections = loadDictFromJSON("data/ws_section")
+    workspaceSections = loadDictFromJSON(path_ws_section)
+    workspaceOverlay = cv2.imread(path_ws_overlay)
     return workspaceOverlay, workspaceSections
 
 def generateWorkspace(imageHeight, imageWidth, r1, r2, offset, bias=0):

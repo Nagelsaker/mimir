@@ -7,6 +7,7 @@ from mpl_toolkits.mplot3d import Axes3D
 from Utility.utils import generateFilename
 import numpy as np
 import json
+import rospy
 
 class SkeletonWidget(QWidget):
     angle1 = 0
@@ -18,10 +19,8 @@ class SkeletonWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        f = open("settings.json")
-        settings = json.load(f)
-        self.useDepth = settings["useDepth"] == 1
-        self.pathToDataset = settings["pathToDataset"]
+        self.useDepth = rospy.get_param("/mimir/use_depth")
+        self.pathToDataset = rospy.get_param("/mimir/path_to_dataset")
         self.w = int(650)
         self.h = int(500)
         self.setMaximumSize(QSize(self.w, self.h))

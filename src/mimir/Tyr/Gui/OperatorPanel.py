@@ -3,6 +3,7 @@ from Gui.Ui_MainWindow import Ui_MainWindow
 from Gui.SettingsDialog import SettingsDialog
 from Hand.HandModel import *
 import json
+import rospy
 
 STOP = 0
 GRIP = 1
@@ -58,19 +59,17 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.saveData.clicked.connect(self.saveDataPoints)
 
         # Load settings
-        f = open("settings.json")
-        settings = json.load(f)
-        self.advancedUse = settings["advancedUse"] == 1
+        self.advancedUse = rospy.get_param("/mimir/advanced_use")
 
         if not self.advancedUse:
             self.skeletonWidget.setHidden(True)
 
         # Load default threshold values
-        self.threshold_wristUp.setValue(settings["wristAngle_threshold"][0])
-        self.threshold_wristDown.setValue(settings["wristAngle_threshold"][1])
-        self.threshold_fingerAng1.setValue(settings["fingerAngle_threshold"])
-        self.threshold_thumbAng1.setValue(settings["thumbAngle_threshold"][0])
-        self.threshold_thumbAng2.setValue(settings["thumbAngle_threshold"][1])
+        self.threshold_wristUp.setValue(rospy.get_param("/mimir/threshold_angle_wrist")[0])
+        self.threshold_wristDown.setValue(rospy.get_param("/mimir/threshold_angle_wrist")[1])
+        self.threshold_fingerAng1.setValue(rospy.get_param("/mimir/threshold_angle_finger"))
+        self.threshold_thumbAng1.setValue(rospy.get_param("/mimir/threshold_angle_thumb")[0])
+        self.threshold_thumbAng2.setValue(rospy.get_param("/mimir/threshold_angle_thumb")[1])
         
     def setWristThreshold(self):
         th1 = self.threshold_wristUp.value()

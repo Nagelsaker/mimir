@@ -1,6 +1,7 @@
 import json
 import csv
 import time
+import rospy
 import numpy as np
 from datetime import date
 from Hand.HandTracking import HandTracking
@@ -47,27 +48,27 @@ class FSM():
     STATE = ST_STOP
 
     def __init__(self):
-        f = open("settings.json")
-        settings = json.load(f)
         # Long range: [0.60, 0.85], Short range: [0.30, 0.59]
-        self.depthRange = settings["depthRange"]
-        self.pathTime = settings["pathTime"] # 0.2
-        self.imgWidth = settings["imgWidth"]
-        self.imgHeight = settings["imgHeight"]
-        self.camSN = settings["camSN"]
-        useDepth = settings["useDepth"] == 1
+        self.depthRange = rospy.get_param("/mimir/depth_range")
+        self.pathTime = rospy.get_param("/mimir/path_time") # 0.2
+        self.imgWidth = rospy.get_param("/mimir/img_width")
+        self.imgHeight = rospy.get_param("/mimir/img_height")
+        self.camSN = rospy.get_param("/mimir/sn_cam")
+        useDepth = rospy.get_param("/mimir/use_depth")
         # Kp=[K_p_beta, K_p_r, K_p_z, K_p_theta, K_p_phi]
-        self.Kp_default = settings["Kp_default"]
-        wristAngle_threshold = settings["wristAngle_threshold"]
-        thumbAngle_threshold = settings["thumbAngle_threshold"]
-        fingerAngle_threshold = settings["fingerAngle_threshold"]
+        self.Kp_default = rospy.get_param("/mimir/Kp_default")
+        wristAngle_threshold = rospy.get_param("/mimir/threshold_angle_wrist")
+        thumbAngle_threshold = rospy.get_param("/mimir/threshold_angle_thumb")
+        fingerAngle_threshold = rospy.get_param("/mimir/threshold_angle_finger")
 
         # Obstacles
-        floor = Obstacle(zRange=settings["floor"]["zRange"])
-        ceiling = Obstacle(zRange=settings["ceiling"]["zRange"])
-        innerCylinder = Obstacle(radiusRange=settings["innerCylinder"]["radiusRange"])
-        outerCylinder = Obstacle(radiusRange=settings["outerCylinder"]["radiusRange"])
-        motor = Obstacle(settings["motor"]["xRange"], settings["motor"]["yRange"], settings["motor"]["zRange"])
+        floor = Obstacle(zRange=rospy.get_param("/mimir/ob_floor/zRange"))
+        ceiling = Obstacle(zRange=rospy.get_param("/mimir/ob_ceiling/zRange"))
+        innerCylinder = Obstacle(radiusRange=rospy.get_param("/mimir/ob_inner_cylinder/radiusRange"))
+        outerCylinder = Obstacle(radiusRange=rospy.get_param("/mimir/ob_outer_cylinder/radiusRange"))
+        motor = Obstacle(xRange=rospy.get_param("/mimir/ob_motor/xRange"),
+                         yRange=rospy.get_param("/mimir/ob_motor/yRange"),
+                         zRange=rospy.get_param("/mimir/ob_motor/zRange"))
         self.obstacles = np.array([floor, ceiling, innerCylinder, outerCylinder, motor])
 
         # Operator workspace
@@ -79,8 +80,8 @@ class FSM():
         self.imgLM = None
 
         # Setup logs
-        self.pathToLog = settings["pathToLog"]
-        self.writeLogs = settings["writeLogs"] == 1
+        self.pathToLog = rospy.get_param("/mimir/path_to_log")
+        self.writeLogs = rospy.get_param("/mimir/write_logs")
         self.pathToLogPose = ""
         self.pathToLogFSMState = ""
         self.pathToLogHandPoints = ""
