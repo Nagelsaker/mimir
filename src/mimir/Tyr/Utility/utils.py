@@ -134,8 +134,8 @@ def loadWorkspace():
         workspaceOverlay: (1920 x 1080 x 3) Array(Float)
         workSpaceSections: Dict: (1920 x 1080) Array(Bool)
     '''
-    path_ws_section = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../data/ws_section")
-    path_ws_overlay = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../data/ws_overlay.jpg")
+    path_ws_section = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../graphics/ws_section")
+    path_ws_overlay = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../graphics/ws_overlay.jpg")
 
 
     # workspaceSections = loadDictFromJSON("data/ws_section")

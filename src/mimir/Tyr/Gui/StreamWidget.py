@@ -5,8 +5,8 @@ import rospy
 from PyQt5.QtWidgets import  QWidget, QLabel
 from PyQt5.QtCore import QThread, pyqtSignal, QSize, pyqtSlot
 from PyQt5.QtGui import QImage, QPixmap
-from FSM import FSM
-from Utility.utils import generateFilename
+from mimir.Tyr.FSM import FSM
+from mimir.Tyr.Utility.utils import generateFilename
 
 
 class Thread(QThread):
@@ -14,6 +14,11 @@ class Thread(QThread):
     activateGesture = pyqtSignal(int)
     updateSkeleton = pyqtSignal(list)
     setDepthValue = pyqtSignal(float)
+    setMeasuredLeverAngle = pyqtSignal(float)
+    setMeasuredLeverPosition = pyqtSignal(float)
+    setEstLeverAngle = pyqtSignal(float)
+    setCurrentGoalDisplay = pyqtSignal(float)
+    setEstLeverPos = pyqtSignal(float)
 
     def __init__(self, parent, w, h):
         super().__init__(parent)
@@ -44,7 +49,7 @@ class Stream(QWidget):
 
         # create a label
         self.label = QLabel(self)
-        scale = 1/2
+        scale = 0.4
         self.w = int(1920*scale)
         self.h = int(1080*scale)
         self.setMinimumSize(QSize(self.w, self.h))
@@ -56,6 +61,11 @@ class Stream(QWidget):
         self.th.activateGesture.connect(self.parent().parent().activateGesture)
         self.th.updateSkeleton.connect(self.parent().parent().updateSkeleton)
         self.th.setDepthValue.connect(self.parent().parent().setDepthValue)
+        self.th.setMeasuredLeverAngle.connect(self.parent().parent().setMeasuredLeverAngle)
+        self.th.setMeasuredLeverPosition.connect(self.parent().parent().setMeasuredLeverPosition)
+        self.th.setEstLeverAngle.connect(self.parent().parent().setEstLeverAngle)
+        self.th.setCurrentGoalDisplay.connect(self.parent().parent().setCurrentGoalDisplay)
+        self.th.setEstLeverPos.connect(self.parent().parent().setEstLeverPos)
         self.th.start()
 
     def setSize(self, width, height):

@@ -1,4 +1,6 @@
+#!/usr/bin/env python
 import argparse
+import rospy
 
 """
 Here are the param for the training
@@ -9,7 +11,7 @@ def get_args():
     parser = argparse.ArgumentParser()
     # the environment setting
     parser.add_argument('--env-name', type=str, default='OpenManipulator_lever_pull_task-v0', help='the environment name')
-    parser.add_argument('--n-epochs', type=int, default=50, help='the number of epochs to train the agent') # 50
+    parser.add_argument('--n-epochs', type=int, default=20, help='the number of epochs to train the agent') # 50
     parser.add_argument('--n-cycles', type=int, default=50, help='the times to collect samples per epoch') # 50
     parser.add_argument('--n-batches', type=int, default=40, help='the times to update the network')
     parser.add_argument('--save-interval', type=int, default=5, help='the interval that save the trajectory')
@@ -38,3 +40,7 @@ def get_args():
     args = parser.parse_args()
 
     return args
+
+if __name__ == "__main__":
+    rospy.init_node("ddpg_params")
+    rospy.spin()

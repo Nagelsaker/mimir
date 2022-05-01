@@ -1,5 +1,5 @@
-from Utility.constants import *
-import Utility.utils as utils
+from mimir.Tyr.Utility.constants import *
+import mimir.Tyr.Utility.utils as utils
 import numpy as np
 
 class HandModel():
@@ -384,6 +384,7 @@ class HandModel():
         '''
         # print(f"{self.openFingers}\t {np.rad2deg(np.array(self.fingerAngles[2][1:])[:,1])} \t\t\t\t \r", end="")
         # Thumb
+        latestLandmarks = self.slidingWindow[-1]
         finger = self.fingerAngles[0]
         angles = np.array(self.fingerAngles[0][1:])[:,0]
         threshold = np.deg2rad(self.thumbAngle_threshold)
@@ -408,7 +409,14 @@ class HandModel():
             # All fingers closed
             self.gesture = GRIP
         elif all(self.openFingers == 1):
-            self.gesture = UNGRIP
+            # Check if thumb is the left most finger, asuuming only left hand visible
+            # x_t = latestLandmarks[0][4]["X"]
+            # x_l = latestLandmarks[0][20]["X"]
+            # print(f"x_t: {x_t}, x_l: {x_l}")
+            if latestLandmarks[0][4]["X"] < latestLandmarks[0][20]["X"]:
+                self.gesture = FLIP_HAND
+            else:
+                self.gesture = UNGRIP
         elif all(self.openFingers[:4] == 0) and self.openFingers[4] == 1:
             # Pinky finger open
             self.gesture = PRECISION

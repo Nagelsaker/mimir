@@ -5,7 +5,9 @@ img_height: 1080
 sn_cam: "836612072676"
 sn_eff_cam: "838212074315"
 use_depth: True
+use_est_lever_state: False
 path_to_dataset: "data/dataset1/"
+path_to_graphics: "/graphics/"
 path_to_log: "log/"
 write_logs: False
 advanced_use: True
@@ -24,3 +26,33 @@ ob_motor:  {
         "yRange": [-0.12, 0.05],
         "zRange": [-99, 0.095]
         }
+
+# DDPG agent params
+DDPG:
+        env_name: "OpenManipulator_lever_pull_task-v0"
+        n_epochs: 20 # 50
+        n_cycles: 50
+        n_batches: 40
+        save_interval: 5
+        seed: 123
+        num_workers: 1
+        replay_strategy: "future"
+        clip_return: 50
+        save_dir: "saved_models"
+        load_model_path: "/saved_models/OpenManipulator_lever_pull_task-v0/model.pt"
+        noise_eps: 0.2
+        random_eps: 0.18
+        buffer_size: 1000000
+        replay_k: 4
+        clip_obs: 200
+        batch_size: 128
+        gamma: 0.98
+        action_l2: 1
+        lr_actor: 0.001
+        lr_critic: 0.001
+        polyak: 0.95
+        n_test_rollouts: 30
+        clip_range: 5
+        demo_length: 20
+        cuda: False
+        num_rollouts_per_mpi: 2

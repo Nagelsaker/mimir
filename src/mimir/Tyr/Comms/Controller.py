@@ -8,8 +8,8 @@
 
 import copy
 import numpy as np
-from Utility.utils import euler_from_quaternion, quaternion_from_euler
-from Comms.Communication import *
+from mimir.Tyr.Utility.utils import euler_from_quaternion, quaternion_from_euler
+from mimir.Tyr.Comms.Communication import *
 
 class Controller():
     '''
@@ -58,7 +58,6 @@ class Controller():
             pathTime: Float
             obstacles: (5x1) Array(Obstacle)
         '''
-        rospy.init_node("OMX_Controller_Node")
         self.obstacles = obstacles
         self.pathTime = pathTime
         self.imgWidth = imgWidth

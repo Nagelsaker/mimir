@@ -4,9 +4,9 @@ import rospy
 import numpy as np
 import mediapipe as mp
 from pathlib import Path
-from Comms.SimpleController import SimpleController
-from Comms.RealSenseCam import CameraStream
-from Comms.Communication import SetPositionClient, PoseSubscriber
+from mimir.Tyr.Comms.SimpleController import SimpleController
+from mimir.Tyr.Comms.RealSenseCam import CameraStream
+from mimir.Tyr.Comms.Communication import SetPositionClient, PoseSubscriber
 
 
 class HandTracking:

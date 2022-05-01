@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<launch>
+
+    <arg name="config_file" default="$(find mimir)config/tyr.yaml" />
+
+
+    <node pkg="mimir" type="arguments.py" name="ddpg_arguments" output="screen"/>
+        <group ns="mimir">
+        	<rosparam file="$(arg config_file)" command="load" />
+        </group>
+</launch>

@@ -1,7 +1,7 @@
 import csv
 import utils
 import numpy as np
-from constants import *
+from mimir.Tyr.Utility.constants import *
 from matplotlib import pyplot as plt
 from matplotlib.ticker import FormatStrFormatter
 from matplotlib.collections import LineCollection
@@ -51,6 +51,21 @@ def loadRobotPoses(pathToData):
             poseData.append([list(map(float, line[1:4])), list(map(float, line[5:]))])
     return poseData
 
+def loadLeverPoses(pathToData):
+    with open(f"{pathToData}", "r") as fp:
+        reader = csv.reader(fp, delimiter=",")
+        poseData = []
+
+        for line in reader:
+            if len(line) == 1 and line[0] == "None":
+                poseData.append([None, None, None, None])
+                continue
+
+            if len(line) != 8 or line[0] != "estimated_angle" and line[6] != "measured_position":
+                raise Exception("Robot poses could not be loaded, format not recognized")
+
+            poseData.append([float(line[1]), float(line[3]), float(line[5]), float(line[7])])
+    return poseData
 
 def loadFSMStates(pathToData):
     with open(f"{pathToData}", "r") as fp:

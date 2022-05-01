@@ -1,9 +1,12 @@
 from PyQt5.QtWidgets import  QMainWindow
-from Gui.Ui_MainWindow import Ui_MainWindow
-from Gui.SettingsDialog import SettingsDialog
-from Hand.HandModel import *
+from PyQt5.QtCore import QSize
+from mimir.Tyr.Gui.Ui_MainWindow import Ui_MainWindow
+from mimir.Tyr.Gui.SettingsDialog import SettingsDialog
+from mimir.Tyr.Hand.HandModel import *
 import json
 import rospy
+import time
+import os
 
 STOP = 0
 GRIP = 1
@@ -22,28 +25,39 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.setupUi(self)
 
         # Setup gesture images
-        self.gestureImage0.setImage("data/gesture0.png")
-        self.gestureImage0.setActiveImage("data/gesture0_active.png")
+        pathToGraphics = f"{os.path.dirname(os.path.abspath(__file__))}/../graphics/"
+        self.gestureImage0.setImage(f"{pathToGraphics}/gesture0.png")
+        self.gestureImage0.setActiveImage(f"{pathToGraphics}/gesture0_active.png")
         self.gestureImages.append(self.gestureImage0)
-        self.gestureImage1.setImage("data/gesture1.png")
-        self.gestureImage1.setActiveImage("data/gesture1_active.png")
+        self.gestureImage1.setImage(f"{pathToGraphics}/gesture1.png")
+        self.gestureImage1.setActiveImage(f"{pathToGraphics}/gesture1_active.png")
         self.gestureImages.append(self.gestureImage1)
-        self.gestureImage2.setImage("data/gesture2.png")
-        self.gestureImage2.setActiveImage("data/gesture2_active.png")
+        self.gestureImage2.setImage(f"{pathToGraphics}/gesture2.png")
+        self.gestureImage2.setActiveImage(f"{pathToGraphics}/gesture2_active.png")
         self.gestureImages.append(self.gestureImage2)
-        self.gestureImage3.setImage("data/gesture3.png")
-        self.gestureImage3.setActiveImage("data/gesture3_active.png")
+        self.gestureImage3.setImage(f"{pathToGraphics}/gesture3.png")
+        self.gestureImage3.setActiveImage(f"{pathToGraphics}/gesture3_active.png")
         self.gestureImages.append(self.gestureImage3)
-        self.gestureImage4.setImage("data/gesture4.png")
-        self.gestureImage4.setActiveImage("data/gesture4_active.png")
+        self.gestureImage4.setImage(f"{pathToGraphics}/gesture4.png")
+        self.gestureImage4.setActiveImage(f"{pathToGraphics}/gesture4_active.png")
         self.gestureImages.append(self.gestureImage4)
-        self.gestureImage5.setImage("data/gesture5.png")
-        self.gestureImage5.setActiveImage("data/gesture5_active.png")
+        self.gestureImage5.setImage(f"{pathToGraphics}/gesture5.png")
+        self.gestureImage5.setActiveImage(f"{pathToGraphics}/gesture5_active.png")
         self.gestureImages.append(self.gestureImage5)
-        self.gestureImage6.setImage("data/gesture6.png")
-        self.gestureImage6.setActiveImage("data/gesture6_active.png")
+        self.gestureImage6.setImage(f"{pathToGraphics}/gesture6.png")
+        self.gestureImage6.setActiveImage(f"{pathToGraphics}/gesture6_active.png")
         self.gestureImages.append(self.gestureImage6)
+        self.gestureImage7.setImage(f"{pathToGraphics}/ai.png")
+        self.gestureImage7.setActiveImage(f"{pathToGraphics}/ai_active.png")
+        self.gestureImages.append(self.gestureImage7)
         self.currentGesture = -1
+
+        # Setup Lever Status Image
+        self.w = 100 # px
+        self.h = 100 # px
+        self.setMinimumSize(QSize(self.w, self.h))
+        self.leverStatusImg.setImage(f"{pathToGraphics}/gray_btn.png")
+        self.leverStatusImg.setActiveImage(f"{pathToGraphics}/green_btn.png")
 
         self.addAction(self.actionPreferences)
         self.actionPreferences.triggered.connect(self.openDialog)
@@ -87,6 +101,21 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def setDepthValue(self, value):
         self.depthDisplay.display(value)
+    
+    def setMeasuredLeverAngle(self, value):
+        self.measuredLeverAngle.display(value)
+    
+    def setMeasuredLeverPosition(self, value):
+        self.measuredLeverPos.display(value)
+    
+    def setCurrentGoalDisplay(self, goal):
+        self.goalDisplay.display(goal)
+    
+    def setEstLeverAngle(self, value):
+        self.estLeverAngle.display(value)
+    
+    def setEstLeverPos(self, value):
+        self.estLeverPos.display(value)
 
     def openDialog(self):
         settingsDialog = SettingsDialog(self)
@@ -101,6 +130,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 else:
                     self.gestureImages[i].deactivate()
         if idx == -1: self.currentGesture = idx
+    
+    def setLeverStatusIcon(self, on):
+        '''
+        Switch the lever status image to green for t seconds
+        '''
+        if on:
+            self.leverStatusImg.activate()
+        else:
+            self.leverStatusImg.deactivate()
     
     def updateSkeleton(self, landmarks):
         if self.advancedUse:

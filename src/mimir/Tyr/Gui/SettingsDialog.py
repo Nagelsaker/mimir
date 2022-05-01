@@ -1,5 +1,5 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
-from Gui.Ui_SettingsDialog import Ui_Dialog
+from mimir.Tyr.Gui.Ui_SettingsDialog import Ui_Dialog
 
 
 

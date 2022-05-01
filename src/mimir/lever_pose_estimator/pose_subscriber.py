@@ -5,11 +5,11 @@ from mimir.msg import LeverPose
 # from lever_pose import LeverPose
 
 def callback(data):
-    # log_string = (f"\nEstimated angle: {np.rad2deg(data.estimated_angle):.2f}"
-    #               f"\nMeasured angle: {np.rad2deg(data.measured_angle):.2f}"
-    #               f"\nEstimated position: {data.estimated_position}"
-    #               f"\nMeasured position: {data.measured_position}")
-    # rospy.loginfo(log_string)
+    log_string = (f"\nEstimated angle: {np.rad2deg(data.estimated_angle):.2f}"
+                  f"\nMeasured angle: {np.rad2deg(data.measured_angle):.2f}"
+                  f"\nEstimated position: {data.estimated_position}"
+                  f"\nMeasured position: {data.measured_position}")
+    rospy.loginfo(log_string)
     pass
     
 def listener():

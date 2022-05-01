@@ -4,10 +4,10 @@ import rospy
 import mujoco_py
 import os, sys, time
 from gym.envs.mujoco.mujoco_env import MujocoEnv
-from arguments import get_args
+from mimir.DDPG.arguments import get_args
 from mpi4py import MPI
 from subprocess import CalledProcessError
-from ddpg_agent import ddpg_agent
+from mimir.DDPG.ddpg_agent import ddpg_agent
 
 # Important! Does not work without including the environment
 from open_manipulator_rl_environments.task_environments.lever_pull_task_mujoco import OpenManipulatorMujocoLeverPullEnvironment
@@ -19,6 +19,7 @@ train the agent, the MPI part code is copy from openai baselines(https://github.
 """
 def get_env_params(env):
     obs = env.reset()
+    # obs = env.get_obs()
     # close the environment
     params = {'obs': obs['observation'].shape[0],
             'goal': obs['desired_goal'].shape[0],
@@ -37,9 +38,10 @@ def launch(args):
     env_params = get_env_params(env)
 
     load_model_path = f"{os.path.dirname(os.path.abspath(__file__))}/saved_models/OpenManipulator_lever_pull_task-v0/model.pt"
+    # load_model_path = None
 
     ddpg_trainer = ddpg_agent(args, env, env_params, load_model_path)
-    ddpg_trainer.learn(early_stopping_threshold=0.85)
+    ddpg_trainer.learn(early_stopping_threshold=0.80)
     # success_rate, avg_reward = ddpg_trainer._eval_agent()
     # print(f"success rate: {success_rate}, avg reward: {avg_reward}")
 
@@ -52,7 +54,7 @@ def visualizeTraining(idx):
 
 if __name__ == '__main__':
     rospy.init_node('train_net_node')
-    args = get_args()
+    args = rospy.get_param("/mimir/DDPG/")
     launch(args)
     #print(f"{int(sys.argv[1])}")
     #visualizeTraining(int(sys.argv[1]))

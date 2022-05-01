@@ -1,14 +1,24 @@
+import imp
 import json
 import csv
 import time
 import rospy
+import gym
+import os
+
 import numpy as np
+
 from datetime import date
-from Hand.HandTracking import HandTracking
-from Utility.utils import drawLandmarks, loadWorkspace, generateFilename
-from Comms.Controller import Controller, Obstacle
 from PyQt5.QtGui import QImage
-from Hand.HandModel import *
+from mimir.Tyr.Utility.utils import drawLandmarks, loadWorkspace, generateFilename
+from mimir.Tyr.Comms.Controller import Controller, Obstacle
+from mimir.Tyr.Hand.HandTracking import HandTracking
+from mimir.Tyr.Hand.HandModel import *
+from mimir.msg import LeverPose
+from mimir.DDPG.ddpg_agent import ddpg_agent
+from mimir.DDPG import arguments
+from mimir.DDPG.train import get_env_params
+from open_manipulator_rl_environments.task_environments.lever_pull_task import OpenManipulatorLeverPullEnvironment
 
 
 
@@ -48,6 +58,7 @@ class FSM():
     STATE = ST_STOP
 
     def __init__(self):
+        rospy.loginfo("TEST")
         # Long range: [0.60, 0.85], Short range: [0.30, 0.59]
         self.depthRange = rospy.get_param("/mimir/depth_range")
         self.pathTime = rospy.get_param("/mimir/path_time") # 0.2
@@ -79,13 +90,33 @@ class FSM():
         self.controller = Controller(self.imgWidth, self.imgHeight, Kp=self.Kp_default, pathTime=self.pathTime, obstacles=self.obstacles)
         self.imgLM = None
 
-        # Setup logs
+        # RL Agent
+        args = rospy.get_param("/mimir/DDPG")
+        env = gym.make(args["env_name"])
+        env_params = get_env_params(env)
+        model_path = args["load_model_path"]
+        load_model_path = f"{os.path.dirname(os.path.abspath(__file__))}/../DDPG/{model_path}"
+        self.agent = ddpg_agent(args, env, env_params, load_model_path)
+        self.agent.setGoal()
+        self.currentGoal = self.agent.getCurrentGoal()
+
+        self.goalReachedTime = -10.0
+        self.leverIconOnTime = -10.0
+        self.goalReached = False
+        self.goalThresholdTime = 1.0
+
+        # Setup logging
+        self.leverPoseSub = rospy.Subscriber("/mimir/lever_angle_pose", LeverPose, self._leverPoseCallback)
+        self.leverPose = LeverPose()
+
         self.pathToLog = rospy.get_param("/mimir/path_to_log")
         self.writeLogs = rospy.get_param("/mimir/write_logs")
         self.pathToLogPose = ""
         self.pathToLogFSMState = ""
         self.pathToLogHandPoints = ""
         self.pathToLogTimeSteps = ""
+        self.pathToLogLeverPose = ""
+        self.pathToLogRewardSuccess = ""
         self.curDate = date.today().strftime("%Y_%m_%d")
         self.curTime = 0
         self.startTime = time.time()
@@ -94,35 +125,10 @@ class FSM():
             self.pathToLogFSMState = generateFilename(self.pathToLog, "csv", f"{self.curDate}_FSMStateLogger")
             self.pathToLogHandPoints = generateFilename(self.pathToLog, "csv", f"{self.curDate}_HandPointsLogger")
             self.pathToLogTimeSteps = generateFilename(self.pathToLog, "csv", f"{self.curDate}_TimeStepLogger")
+            self.pathToLogLeverPose = generateFilename(self.pathToLog, "csv", f"{self.curDate}_LeverPoseLogger")
+            self.pathToLogRewardSuccess = generateFilename(self.pathToLog, "csv", f"{self.curDate}_RewardSuccessLogger")
 
-    def setWristThreshold(self, threshold):
-        '''
-        In:
-            threshold: (2x1) Array(float)
-        '''
-        self.hm.setWristThreshold(threshold)
 
-    def setFingerThreshold(self, threshold):
-        '''
-        In:
-            threshold: (float)
-        '''
-        self.hm.setFingerThreshold(threshold)
-
-    def setThumbThreshold(self, threshold):
-        '''
-        In:
-            threshold: (2x1) Array(float)
-        '''
-        self.hm.setThumbThreshold(threshold)
-
-    def getCurrentImage(self):
-        '''
-        Out:
-            (2x1) (1080x1920x3) Array(float)
-        '''
-        return self.imgLM
-    
     def run(self, thread=None):
         '''
         In:
@@ -158,10 +164,34 @@ class FSM():
                     thread.updateSkeleton.emit(handPoints[0])
                     thread.setDepthValue.emit(depth*100)
 
-                # FSM
-                usePrecision = (currentGesture==PRECISION)
+                if self.leverPose.measured_position != [] and thread is not None:
+                    thread.setMeasuredLeverAngle.emit(np.rad2deg(self.leverPose.measured_angle))
+                    thread.setMeasuredLeverPosition.emit(self.leverPose.measured_position[0])
+                    thread.setEstLeverAngle.emit(np.rad2deg(self.leverPose.estimated_angle))
+                    thread.setCurrentGoalDisplay.emit(np.rad2deg(self.currentGoal[3]))
+                    thread.setEstLeverPos.emit(self.leverPose.estimated_position[0])
+
+                    # Toggle lever icon
+                    if self.goalReached:
+                        if self.goalReachedTime == -10.0:
+                            self.goalReachedTime = time.time()
+                        if time.time() - self.goalReachedTime > self.goalThresholdTime:
+                            if self.leverIconOnTime == -10.0:
+                                self.leverIconOnTime = time.time()
+                            if time.time - self.leverIconOnTime < 3.0: # Light the lever icon for 3 seconds
+                                thread.setLeverStatusIcon(True)
+                            else:
+                                self.leverIconOnTime = -10.0
+                                thread.setLeverStatusIcon(False)
+                                self.goalReached = False
+                                self.goalReachedTime = -10.0
                 
 
+                # Current time
+                self.curTime = time.time() - self.startTime
+
+                # FSM
+                usePrecision = (currentGesture==PRECISION)
                 if wsLoc == WS_TURN_LEFT and currentGesture != STOP:
                     self.STATE = ST_TURN_LEFT
                     self.controller.updateRobotPose(updateX=True, updateY=True)
@@ -194,13 +224,33 @@ class FSM():
                 elif wsLoc == WS_MISC and currentGesture == TILT_DOWN:
                     self.STATE = ST_TILT_DOWN
                     self.controller.incrementOrientation(direction="down")
+                elif currentGesture == FLIP_HAND:
+                    self.STATE = ST_RL_AGENT
+                    
+                    if np.abs(self.controller.pose["position"]["y"]) < 0.005:
+                        # Activate RL Agent
+                        reward, success = self.agent.step()
+                        self.goalReached = success
+                        if self.writeLogs:
+                            self.logRewardAndSuccess(self.curTime, reward, success)
+                            # Reset the robot to init pose
+                            # Find a new goal
+                            self.agent.env.reset()
+                            self.agent.setGoal()
+                            self.currentGoal = self.agent.getCurrentGoal()
+                    else:
+                        # Turn horizontally
+                        self.controller.updateRobotPose(updateX=True, updateY=True)
+                        direction = "left" if self.controller.pose["position"]["y"] < 0 else "right"
+                        useSmallSteps = True if np.abs(self.controller.pose["position"]["y"]) < 0.05 else False
+                        self.controller.turnHorizontally(direction=direction, precision=useSmallSteps)
                 else:
                     self.STATE = ST_STOP
                 
                 # Logging
                 if self.writeLogs:
                     pose = self.controller.getPose()
-                    self.log(pose, self.STATE, handPoints)
+                    self.log(self.curTime, pose, self.STATE, handPoints, self.leverPose)
 
 
         except Exception as e:
@@ -210,11 +260,42 @@ class FSM():
             if thread is not None:
                 thread.quit()
 
-    def log(self, pose=None, state=None, handPoints=None):
+    def _leverPoseCallback(self, msg):
+        self.leverPose = msg
+
+    def setWristThreshold(self, threshold):
+        '''
+        In:
+            threshold: (2x1) Array(float)
+        '''
+        self.hm.setWristThreshold(threshold)
+
+    def setFingerThreshold(self, threshold):
+        '''
+        In:
+            threshold: (float)
+        '''
+        self.hm.setFingerThreshold(threshold)
+
+    def setThumbThreshold(self, threshold):
+        '''
+        In:
+            threshold: (2x1) Array(float)
+        '''
+        self.hm.setThumbThreshold(threshold)
+
+    def getCurrentImage(self):
+        '''
+        Out:
+            (2x1) (1080x1920x3) Array(float)
+        '''
+        return self.imgLM
+
+    def log(self, t=None, pose=None, state=None, handPoints=None, leverPose=None):
         self.logRobotPose(pose)
         self.logFSMState(state)
         self.logHandPoints(handPoints)
-        t = time.time() - self.startTime
+        self.logLeverPose(leverPose)
         self.logTimeSteps(t)
 
     def logRobotPose(self, pose):
@@ -259,6 +340,19 @@ class FSM():
             
             writer.writerow(formattedHP)
     
+    def logLeverPose(self, leverPose):
+        with open(f"{self.pathToLogLeverPose}", "a") as fp:
+            writer = csv.writer(fp)
+
+            if leverPose is None:
+                writer.writerow(["None"])
+                return
+
+            formattedPose = []
+            for key, value in leverPose.items():
+                formattedPose.append([key, value])
+            writer.writerow(formattedPose)
+    
     def logTimeSteps(self, t):
         with open(f"{self.pathToLogTimeSteps}", "a") as fp:
             writer = csv.writer(fp)
@@ -268,6 +362,11 @@ class FSM():
                 return
             
             writer.writerow([str(t)])
+
+    def logRewardAndSuccess(self, t, reward, success):
+        with open(f"{self.pathToLogRewardSuccess}", "a") as fp:
+            writer = csv.writer(fp)
+            writer.writerow([t, reward, success])
 
 
 if __name__ == "__main__":

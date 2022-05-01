@@ -8,8 +8,8 @@ class GestureImage(QWidget):
         super().__init__(parent)
 
         self.label = QLabel(self)
-        self.w = 230 # px
-        self.h = 230 # px
+        self.w = 200 # px
+        self.h = 200 # px
         self.setMinimumSize(QSize(self.w, self.h))
         self.label.resize(self.w, self.h)
         self.image = None
