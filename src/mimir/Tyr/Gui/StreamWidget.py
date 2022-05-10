@@ -19,6 +19,7 @@ class Thread(QThread):
     setEstLeverAngle = pyqtSignal(float)
     setCurrentGoalDisplay = pyqtSignal(float)
     setEstLeverPos = pyqtSignal(float)
+    setLeverStatusIcon = pyqtSignal(bool)
 
     def __init__(self, parent, w, h):
         super().__init__(parent)
@@ -66,6 +67,7 @@ class Stream(QWidget):
         self.th.setEstLeverAngle.connect(self.parent().parent().setEstLeverAngle)
         self.th.setCurrentGoalDisplay.connect(self.parent().parent().setCurrentGoalDisplay)
         self.th.setEstLeverPos.connect(self.parent().parent().setEstLeverPos)
+        self.th.setLeverStatusIcon.connect(self.parent().parent().setLeverStatusIcon)
         self.th.start()
 
     def setSize(self, width, height):

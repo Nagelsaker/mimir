@@ -8,8 +8,8 @@ use_depth: True
 use_est_lever_state: False
 path_to_dataset: "data/dataset1/"
 path_to_graphics: "/graphics/"
-path_to_log: "log/"
-write_logs: False
+path_to_log: "/home/simon/catkin_ws/src/mimir/src/mimir/Tyr/log/"
+write_logs: True
 advanced_use: True
 Kp_default: [0.20, 0.05, 0.07, 0.15, 0.17453292519943295]
 threshold_angle_wrist: [-10, 15]
@@ -30,7 +30,7 @@ ob_motor:  {
 # DDPG agent params
 DDPG:
         env_name: "OpenManipulator_lever_pull_task-v0"
-        n_epochs: 20 # 50
+        n_epochs: 50 # 50
         n_cycles: 50
         n_batches: 40
         save_interval: 5
@@ -39,8 +39,8 @@ DDPG:
         replay_strategy: "future"
         clip_return: 50
         save_dir: "saved_models"
-        load_model_path: "/saved_models/OpenManipulator_lever_pull_task-v0/model.pt"
-        noise_eps: 0.2
+        load_model_path: "/saved_models/OpenManipulator_lever_pull_task-v0/model_sparse_best.pt"
+        noise_eps: 0.2 #0.2
         random_eps: 0.18
         buffer_size: 1000000
         replay_k: 4

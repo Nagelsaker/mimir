@@ -56,7 +56,7 @@ class ddpg_agent:
             self.g_norm.mean = model[2]
             self.g_norm.std = model[3]
             self.actor_network.load_state_dict(model[4])
-            # self.critic_network.load_state_dict(model[5]) # TODO: Uncomment
+            self.critic_network.load_state_dict(model[5]) # TODO: Uncomment
 
 
         # create the dict for store the model
@@ -121,7 +121,7 @@ class ddpg_agent:
                         with torch.no_grad():
                             input_tensor = self._preproc_inputs(obs, g)
                             pi = self.actor_network(input_tensor)
-                            action = self._select_actions(pi)
+                            action = self._select_actions(pi, epoch)
                         # feed the actions into the environment
                         observation_new, reward, done, info = self.env.step(action)
                         obs_new = observation_new['observation']
@@ -190,10 +190,11 @@ class ddpg_agent:
         return inputs
     
     # this function will choose action for the agent and do the exploration
-    def _select_actions(self, pi):
+    def _select_actions(self, pi, epoch):
         action = pi.cpu().numpy().squeeze()
         # add the gaussian
-        action += self.args["noise_eps"] * self.env_params['action_max'] * np.random.randn(*action.shape)
+        noise = self.args["noise_eps"] / (epoch+1)
+        action += noise * self.env_params['action_max'] * np.random.randn(*action.shape)
         action = np.clip(action, -self.env_params['action_max'], self.env_params['action_max'])
         # random actions...
         random_actions = np.random.uniform(low=-self.env_params['action_max'], high=self.env_params['action_max'], \

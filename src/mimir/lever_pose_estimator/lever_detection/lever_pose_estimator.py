@@ -32,8 +32,13 @@ OBJECT_POINTS_ALL = {
 
 # CAMERA_DHPARAM_MEASUREMENT = {"T1" : [0, 3.25e-2, -6.7e-2, np.pi/2],
 #                               "T2" : [0., 7.6e-2, 0., 0.]}
-CAMERA_DHPARAM_MEASUREMENT = {"T1" : [0, 6.7e-2, 3.25e-2, -np.pi/2],
-                              "T2" : [-np.pi/2, 7.6e-2, 0., np.pi/2]}
+
+# USED THIS BEFORE
+# CAMERA_DHPARAM_MEASUREMENT = {"T1" : [0, -6.7e-2, -3.25e-2, 0.],
+#                               "T2" : [-np.pi/2, 7.6e-2, 0., -np.pi/2]}
+
+CAMERA_DHPARAM_MEASUREMENT = {"T_c_c1" : [0, 6.7e-2, 3.25e-2, np.pi/2],
+                              "T_c1_eff" : [np.pi/2, -7.6e-2, 0., 0.]}
 
 
 JOINT_SPACE_SUBSCRIBER = '/joint_states'
@@ -42,8 +47,8 @@ class LeverPoseEstimator(object):
     def __init__(self, camera_matrix):
         self.camera_matrix = camera_matrix
         self.all_obj_p = OBJECT_POINTS_ALL
-        self.T1_params = CAMERA_DHPARAM_MEASUREMENT["T1"]
-        self.T2_params = CAMERA_DHPARAM_MEASUREMENT["T2"]
+        self.T1_params = CAMERA_DHPARAM_MEASUREMENT["T_c_c1"]
+        self.T2_params = CAMERA_DHPARAM_MEASUREMENT["T_c1_eff"]
         self._calculateCamToEffTransform()
 
         # Subscribe to the OMX joint states
@@ -60,7 +65,7 @@ class LeverPoseEstimator(object):
             image,_ = camera_stream.getImages()
             corners, ids = self.detectArucoFromImg(image)
 
-            stacked_corners, obj_p = self._getRelatedObjAndCornerPnts(corners, ids)
+            stacked_corners, obj_p = self._sortObjAndCornerPnts(corners, ids)
             if show_image:
                 image_corners = self.drawPointsOnImage(image, stacked_corners)
                 cv2.namedWindow('omx stream', cv2.WINDOW_NORMAL)
@@ -142,7 +147,7 @@ class LeverPoseEstimator(object):
         elif len(ids) == 1:
             left_ids = [0, 3]
             right_ids = [1, 2]
-        stacked_corners, visible_obj_p = self._getRelatedObjAndCornerPnts(corners, ids)
+        stacked_corners, visible_obj_p = self._sortObjAndCornerPnts(corners, ids)
         rvec, tvec = self._getRotAndTransVec(stacked_corners, visible_obj_p)
 
         H_targ_cam = np.zeros((4,4))
@@ -162,20 +167,20 @@ class LeverPoseEstimator(object):
         obj_p_hom = self._vectorToHomogeneous(visible_obj_p)
         object_coords_w = self._vecToInhomogeneous((H_targ_w @ obj_p_hom.T).T)
 
+        # self._plot3d(object_coords_w)
+
 
         # TODO: Verify the sign of the angles
         # Interpolate left line
         # We do not care about y values, since the angle is in the XZ plane
         left_points = np.vstack([object_coords_w[left_ids][:,0], object_coords_w[left_ids][:,2]]).T
-        # left_line = interp1d(left_points[:,0], left_points[:,1])
-        # left_angle = np.arctan2(left_line(left_points[0,0]), left_line(left_points[-1,0]))
-        left_angle = np.arctan2((left_points[-1,0] - left_points[0,0]), np.abs(left_points[0,1] - left_points[-1,1]))
+        left_angle = np.arctan2(np.mean(left_points[1::2,0] - left_points[::2,0]),
+                                np.abs(np.mean(left_points[1::2,1] - left_points[::2,1])))
 
         # Interpolate right line
         right_points = np.vstack([object_coords_w[right_ids][:,0], object_coords_w[right_ids][:,2]]).T
-        # right_line = interp1d(right_points[:,0], right_points[:,1])
-        # right_angle = np.arctan2(right_line(right_points[0,0]), right_line(right_points[-1,0]))
-        right_angle = np.arctan2((right_points[-1,0] - right_points[0,0]), np.abs(right_points[0,1] - right_points[-1,1]))
+        right_angle = np.arctan2(np.mean(right_points[1::2,0] - right_points[::2,0]),
+                        np.abs(np.mean(right_points[1::2,1] - right_points[::2,1])))
 
         angle_est = (left_angle + right_angle)/2
         self.previous_angle_est = angle_est
@@ -185,8 +190,6 @@ class LeverPoseEstimator(object):
         lever_pos_w = self._vecToInhomogeneous(H_targ_w @ self._vectorToHomogeneous(lever_pos_obj))
         self.previous_pos_est = lever_pos_w
 
-        # Plot object_coords_w in a 3d scatter plot
-        # self._plot3d(object_coords_w)
         return angle_est, lever_pos_w
 
 
@@ -199,7 +202,7 @@ class LeverPoseEstimator(object):
         # rvec is the rotation vector from world coordinates to camera coordinates [x ang, y ang z ang]
         return rvec, tvec
 
-    def _getRelatedObjAndCornerPnts(self, corners, ids):
+    def _sortObjAndCornerPnts(self, corners, ids):
         '''
         Stacks corner points into one array, and creates an array of visible object points
         based on the detected aruco markers
@@ -218,7 +221,11 @@ class LeverPoseEstimator(object):
 
         i = 0
         for id in ids[:,0]:
-            visible_obj_p[i*4:i*4+4,:] = self.all_obj_p[id]
+            try:
+                visible_obj_p[i*4:i*4+4,:] = self.all_obj_p[id]
+            except:
+                rospy.loginfo(f"Could not find object with id: {id}")
+                break
             stacked_corners[i*4:i*4+4,:] = corners[i]
             i += 1
 
@@ -226,34 +233,45 @@ class LeverPoseEstimator(object):
 
 
     def _calculateCamToEffTransform(self):
-        # H_c1_eff = self._makeTransformFromDHParams(theta=self.T1_params[0],
-        #                                           d=self.T1_params[1],
-        #                                           a=self.T1_params[2],
-        #                                           alpha=self.T1_params[3])
-        # H_cam_c1 = self._makeTransformFromDHParams(theta=self.T2_params[0],
-        #                                           d=self.T2_params[1],
-        #                                           a=self.T2_params[2],
-        #                                           alpha=self.T2_params[3])
+        # Camera frame: X right, Y down, Z forward
+        # EFF frame: X forward, Y left, Z up
 
-        H_c1_cam = self._makeTransformFromDHParams(theta=self.T1_params[0],
-                                                  d=self.T1_params[1],
-                                                  a=self.T1_params[2],
-                                                  alpha=self.T1_params[3])
+        # Measured distances between camera lens and end-effector, in camera frame
+        tx = 3.25e-2
+        ty = 7.6e-2
+        tz = 6.7e-2
+
+        T = np.array([[1, 0, 0, tx],
+                        [0, 1, 0, ty],
+                        [0, 0, 1, tz],
+                        [0, 0, 0, 1]])
+
+        alpha = np.pi/2
+        rot_x = np.array([[1, 0, 0, 0],
+                        [0, np.cos(alpha), -np.sin(alpha), 0],
+                        [0, np.sin(alpha), np.cos(alpha), 0],
+                        [0, 0, 0, 1]])
+
+        theta = np.pi/2
+        rot_z = np.array([[np.cos(theta), -np.sin(theta), 0, 0],
+                        [np.sin(theta), np.cos(theta), 0, 0],
+                        [0, 0, 1, 0],
+                        [0, 0, 0, 1]])
+
+        alpha2 = -np.pi/2 # This second rotation about x is needed to get the correct orientation of the end-effector
+        rot_x2 = np.array([[1, 0, 0, 0],
+                        [0, np.cos(alpha2), -np.sin(alpha2), 0],
+                        [0, np.sin(alpha2), np.cos(alpha2), 0],
+                        [0, 0, 0, 1]])
         
-        H_cam_c1 = np.linalg.inv(H_c1_cam)
 
-        H_eff_c1 = self._makeTransformFromDHParams(theta=self.T2_params[0],
-                                                  d=self.T2_params[1],
-                                                  a=self.T2_params[2],
-                                                  alpha=self.T2_params[3])
-        H_c1_eff = np.linalg.inv(H_eff_c1)
-
-        H_cam_eff = H_c1_eff @ H_cam_c1 
-
+        H_eff_cam = T@rot_x@rot_z@rot_x2 # Current axis, thus new rotations are multiplied from the right
+        H_cam_eff = np.linalg.inv(H_eff_cam)
         self.H_cam_eff = H_cam_eff
 
 
-    def _makeTransformFromDHParams(self, theta, d, a, alpha):
+
+    def _makeTransformFromDHParams(theta, d, a, alpha):
         '''
         In:
             theta: Rot angle in rad around z-axis
@@ -277,7 +295,9 @@ class LeverPoseEstimator(object):
                         [0, np.cos(alpha), -np.sin(alpha), 0],
                         [0, np.sin(alpha), np.cos(alpha), 0],
                         [0, 0, 0, 1]])
-        T = rot_z@T_z@T_a@rot_x
+        # T = rot_z@T_z@T_a@rot_x
+        T = T_z@rot_z@T_a@rot_x
+        # T = rot_x@T_a@rot_z@T_z
         return T
     
     def _vectorToHomogeneous(self, vector):
@@ -371,12 +391,12 @@ class LeverPoseEstimator(object):
         image = image.copy()
         for point in points:
             cv2.circle(image, (int(point[0]), int(point[1])), 8, (0,0,255), -1)
+            cv2.addText(image, f'({int(point[0])},{int(point[1])})', (int(point[0]), int(point[1])), "*Times*")
         return image
 
 
 if __name__ == "__main__":
     rospy.init_node("lever_angle_estimator")
-    print("Hey hey")
     path_to_img = f"{os.path.dirname(sys.argv[0])}/imgs/14_Color.png"
     image = cv2.imread(path_to_img) # load image as bgr
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB) # convert to rgb
@@ -400,9 +420,9 @@ if __name__ == "__main__":
             image,_ = camera_stream.getImages()
             corners, ids = lp_est.detectArucoFromImg(image)
 
-            stacked_corners, obj_p = lp_est._getRelatedObjAndCornerPnts(corners, ids)
-            image_corners = lp_est.drawPointsOnImage(image, stacked_corners)
+            stacked_corners, obj_p = lp_est._sortObjAndCornerPnts(corners, ids)
             cv2.namedWindow('omx stream', cv2.WINDOW_NORMAL)
+            image_corners = lp_est.drawPointsOnImage(image, stacked_corners)
             cv2.imshow('omx stream', image_corners)
             cv2.waitKey(1)
 

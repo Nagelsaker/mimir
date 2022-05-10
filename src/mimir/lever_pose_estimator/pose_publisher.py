@@ -15,7 +15,7 @@ def leverAnglePublisher(ip, port, cam_sn, camera_matrix):
     rate = rospy.Rate(10) # 10hz
 
     lever_pose = LeverPose()
-    lever_pose.measured_position = [23e-2, 0., 4e-2] # [23e-2, 0., 12.9e-2]
+    lever_pose.measured_position = [26e-2, 0., 4e-2] # [23e-2, 0., 12.9e-2]
 
     lever_pose_est = LeverPoseEstimator(camera_matrix)
 
@@ -35,7 +35,11 @@ def leverAnglePublisher(ip, port, cam_sn, camera_matrix):
 
             # print(f"Measured angle: {np.rad2deg(measured_angle):.2f}\t Data: {data}")
             
-            angle_est, pos_est = lever_pose_est.estimatePoseFromCamStream(camera_stream)
+            try:
+                angle_est, pos_est = lever_pose_est.estimatePoseFromCamStream(camera_stream)
+            except:
+                angle_est = 0.
+                pos_est = [0., 0., 0.]
 
             lever_pose.estimated_angle = -angle_est
             lever_pose.estimated_position = list(pos_est)

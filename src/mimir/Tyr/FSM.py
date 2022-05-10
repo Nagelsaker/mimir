@@ -172,23 +172,34 @@ class FSM():
                     thread.setEstLeverPos.emit(self.leverPose.estimated_position[0])
 
                     # Toggle lever icon
-                    if self.goalReached:
-                        if self.goalReachedTime == -10.0:
-                            self.goalReachedTime = time.time()
-                        if time.time() - self.goalReachedTime > self.goalThresholdTime:
-                            if self.leverIconOnTime == -10.0:
-                                self.leverIconOnTime = time.time()
-                            if time.time - self.leverIconOnTime < 3.0: # Light the lever icon for 3 seconds
-                                thread.setLeverStatusIcon(True)
-                            else:
-                                self.leverIconOnTime = -10.0
-                                thread.setLeverStatusIcon(False)
-                                self.goalReached = False
-                                self.goalReachedTime = -10.0
+                    # if self.goalReached:
+                    #     if self.goalReachedTime == -10.0:
+                    #         self.goalReachedTime = time.time()
+                    #     if time.time() - self.goalReachedTime > self.goalThresholdTime:
+                    #         if self.leverIconOnTime == -10.0:
+                    #             self.leverIconOnTime = time.time()
+                    #         if time.time() - self.leverIconOnTime < 3.0: # Light the lever icon for 3 seconds
+                    #             thread.setLeverStatusIcon(True)
+                    #         else:
+                    #             self.leverIconOnTime = -10.0
+                    #             thread.setLeverStatusIcon(False)
+                    #             self.goalReached = False
+                    #             self.goalReachedTime = -10.0
                 
+                    if self.goalReached:
+                        self.leverIconOnTime = time.time()
+
+                    if time.time() - self.leverIconOnTime < 3.0: # Light the lever icon for 3 seconds
+                        thread.setLeverStatusIcon.emit(True)
+                    else:
+                        self.leverIconOnTime = -10.0
+                        thread.setLeverStatusIcon.emit(False)
+                        self.goalReached = False
+            
 
                 # Current time
                 self.curTime = time.time() - self.startTime
+                # rospy.loginfo(f"Status: {currentGesture}, \tTime: {self.curTime}")
 
                 # FSM
                 usePrecision = (currentGesture==PRECISION)
@@ -228,11 +239,16 @@ class FSM():
                     self.STATE = ST_RL_AGENT
                     
                     if np.abs(self.controller.pose["position"]["y"]) < 0.005:
+                        # rospy.loginfo("STEPPING WITH AI")
                         # Activate RL Agent
+                        time.sleep(1e-2)
                         reward, success = self.agent.step()
+                        # rospy.loginfo(f"STEPPING WITH AI DONE\t {reward}\t {success}")
                         self.goalReached = success
                         if self.writeLogs:
                             self.logRewardAndSuccess(self.curTime, reward, success)
+
+                        if self.goalReached:
                             # Reset the robot to init pose
                             # Find a new goal
                             self.agent.env.reset()
@@ -240,9 +256,11 @@ class FSM():
                             self.currentGoal = self.agent.getCurrentGoal()
                     else:
                         # Turn horizontally
+                        # rospy.loginfo("TURNING HORIZONTALLY")
                         self.controller.updateRobotPose(updateX=True, updateY=True)
                         direction = "left" if self.controller.pose["position"]["y"] < 0 else "right"
                         useSmallSteps = True if np.abs(self.controller.pose["position"]["y"]) < 0.05 else False
+                        time.sleep(1e-2)
                         self.controller.turnHorizontally(direction=direction, precision=useSmallSteps)
                 else:
                     self.STATE = ST_STOP
@@ -254,7 +272,7 @@ class FSM():
 
 
         except Exception as e:
-            print(f"{str(e)}")
+            rospy.loginfo(f"Exception occured!\n{str(e)}")
             self.handTracker.endStream() # Remember to end the stream
             self.controller.endController()
             if thread is not None:
@@ -349,8 +367,10 @@ class FSM():
                 return
 
             formattedPose = []
-            for key, value in leverPose.items():
-                formattedPose.append([key, value])
+            formattedPose.append([leverPose.estimated_angle,
+                                  leverPose.measured_angle,
+                                  [leverPose.estimated_position],
+                                  [leverPose.measured_position]])
             writer.writerow(formattedPose)
     
     def logTimeSteps(self, t):
@@ -364,6 +384,7 @@ class FSM():
             writer.writerow([str(t)])
 
     def logRewardAndSuccess(self, t, reward, success):
+        rospy.loginfo(f"Logging reward and success at path {self.pathToLogRewardSuccess}")
         with open(f"{self.pathToLogRewardSuccess}", "a") as fp:
             writer = csv.writer(fp)
             writer.writerow([t, reward, success])

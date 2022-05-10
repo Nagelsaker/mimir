@@ -17,9 +17,10 @@ def evalTraining(name, n_evals=5):
     env = gym.make("OpenManipulator_lever_pull_task_mujoco-v0")
     rospy.loginfo("LOADED!")
     env_params = get_env_params(env)
-    args = get_args()
+    # args = get_args()
+    args = rospy.get_param("/mimir/DDPG/")
 
-    load_model_path = f"{os.path.dirname(os.path.abspath(__file__))}/saved_models/OpenManipulator_lever_pull_task-v0/model.pt"
+    load_model_path = f"{os.path.dirname(os.path.abspath(__file__))}/saved_models/OpenManipulator_lever_pull_task-v0/model{name}.pt"
     ddpg_model = ddpg_agent(args, env, env_params, load_model_path)
 
     avg_success_rate = 0

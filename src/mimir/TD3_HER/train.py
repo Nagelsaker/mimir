@@ -34,7 +34,7 @@ def launch(env, model_class, model_path):
     # Time limit for the episodes
     max_episode_length = args.n_cycles
     total_timesteps = 1e6
-    action_noise = NormalActionNoise(0, 0.1)
+    action_noise = NormalActionNoise(0, 0.2)
 
     # Initialize the model
     model = model_class(
@@ -84,6 +84,6 @@ if __name__ == "__main__":
     env_params = get_env_params(env)
 
     model_class = TD3  #     works also with SAC, DDPG and TD3
-    model_path = f"{os.path.dirname(os.path.abspath(__file__))}/saved_models/model2"
+    model_path = f"{os.path.dirname(os.path.abspath(__file__))}/saved_models/model1"
     launch(env, model_class, model_path)
     # testModel(env, model_class, model_path)

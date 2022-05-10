@@ -29,7 +29,7 @@ def get_env_params(env):
     params['max_timesteps'] = env._max_episode_steps
     return params
 
-def launch(args):
+def launch(args, model_name):
     # env = OpenManipulatorLeverPullEnvironment()
     env = gym.make("OpenManipulator_lever_pull_task_mujoco-v0")
     # env = gym.make("OpenManipulator_lever_pull_task-v0")
@@ -37,11 +37,13 @@ def launch(args):
     rospy.loginfo("LOADED!")
     env_params = get_env_params(env)
 
-    load_model_path = f"{os.path.dirname(os.path.abspath(__file__))}/saved_models/OpenManipulator_lever_pull_task-v0/model.pt"
-    # load_model_path = None
+    if model_name == "NONE":
+        load_model_path = None
+    else:
+        load_model_path = f"{os.path.dirname(os.path.abspath(__file__))}/saved_models/OpenManipulator_lever_pull_task-v0/model{model_name}.pt"
 
     ddpg_trainer = ddpg_agent(args, env, env_params, load_model_path)
-    ddpg_trainer.learn(early_stopping_threshold=0.80)
+    ddpg_trainer.learn(early_stopping_threshold=1.5)
     # success_rate, avg_reward = ddpg_trainer._eval_agent()
     # print(f"success rate: {success_rate}, avg reward: {avg_reward}")
 
@@ -54,8 +56,12 @@ def visualizeTraining(idx):
 
 if __name__ == '__main__':
     rospy.init_node('train_net_node')
+    if len(sys.argv) == 2:
+        model_name = sys.argv[1]
+    else:
+        model_name = ""
     args = rospy.get_param("/mimir/DDPG/")
-    launch(args)
+    launch(args, model_name)
     #print(f"{int(sys.argv[1])}")
     #visualizeTraining(int(sys.argv[1]))
     
