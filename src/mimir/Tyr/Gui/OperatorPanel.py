@@ -69,6 +69,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.threshold_thumbAng1.valueChanged.connect(self.setThumbThreshold)
         self.threshold_thumbAng2.valueChanged.connect(self.setThumbThreshold)
 
+        self.setGoalSpinBox.valueChanged.connect(self.setCurrentGoal)
+
         # Buttons
         self.saveData.clicked.connect(self.saveDataPoints)
 
@@ -99,6 +101,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         th2 = self.threshold_thumbAng2.value()
         self.videoStream.th.setThumbThreshold([th1, th2])
 
+    def setCurrentGoal(self, goal):
+        goal = self.setGoalSpinBox.value()
+        goal = np.deg2rad(goal)
+        self.videoStream.th.setCurrentGoal(goal)
+
     def setDepthValue(self, value):
         self.depthDisplay.display(value)
     
@@ -107,9 +114,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     
     def setMeasuredLeverPosition(self, value):
         self.measuredLeverPos.display(value)
-    
-    def setCurrentGoalDisplay(self, goal):
-        self.goalDisplay.display(goal)
     
     def setEstLeverAngle(self, value):
         self.estLeverAngle.display(value)

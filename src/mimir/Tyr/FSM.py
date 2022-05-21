@@ -168,7 +168,6 @@ class FSM():
                     thread.setMeasuredLeverAngle.emit(np.rad2deg(self.leverPose.measured_angle))
                     thread.setMeasuredLeverPosition.emit(self.leverPose.measured_position[0])
                     thread.setEstLeverAngle.emit(np.rad2deg(self.leverPose.estimated_angle))
-                    thread.setCurrentGoalDisplay.emit(np.rad2deg(self.currentGoal[3]))
                     thread.setEstLeverPos.emit(self.leverPose.estimated_position[0])
 
                     # Toggle lever icon
@@ -246,7 +245,7 @@ class FSM():
                         # rospy.loginfo(f"STEPPING WITH AI DONE\t {reward}\t {success}")
                         self.goalReached = success
                         if self.writeLogs:
-                            self.logRewardAndSuccess(self.curTime, reward, success)
+                            self.logRewardAndSuccess(self.curTime, reward, success, self.currentGoal)
 
                         if self.goalReached:
                             # Reset the robot to init pose
@@ -301,6 +300,13 @@ class FSM():
             threshold: (2x1) Array(float)
         '''
         self.hm.setThumbThreshold(threshold)
+
+    def setCurrentGoal(self, goal):
+        '''
+        In:
+            goal: (Float) radians
+        '''
+        self.agent.setGoal(goal)
 
     def getCurrentImage(self):
         '''
@@ -383,11 +389,11 @@ class FSM():
             
             writer.writerow([str(t)])
 
-    def logRewardAndSuccess(self, t, reward, success):
+    def logRewardAndSuccess(self, t, reward, success, currentGoal):
         rospy.loginfo(f"Logging reward and success at path {self.pathToLogRewardSuccess}")
         with open(f"{self.pathToLogRewardSuccess}", "a") as fp:
             writer = csv.writer(fp)
-            writer.writerow([t, reward, success])
+            writer.writerow([t, reward, success, currentGoal])
 
 
 if __name__ == "__main__":

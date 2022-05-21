@@ -71,8 +71,8 @@ class ddpg_agent:
     def getCurrentGoal(self):
         return self.env.get_current_goal()
 
-    def setGoal(self):
-        self.env.set_goal()
+    def setGoal(self, goal=None):
+        self.env.set_goal(goal)
 
     def step(self):
         '''

@@ -17,7 +17,6 @@ class Thread(QThread):
     setMeasuredLeverAngle = pyqtSignal(float)
     setMeasuredLeverPosition = pyqtSignal(float)
     setEstLeverAngle = pyqtSignal(float)
-    setCurrentGoalDisplay = pyqtSignal(float)
     setEstLeverPos = pyqtSignal(float)
     setLeverStatusIcon = pyqtSignal(bool)
 
@@ -38,6 +37,9 @@ class Thread(QThread):
     
     def setThumbThreshold(self, threshold):
         self.fsm.setThumbThreshold(threshold)
+    
+    def setCurrentGoal(self, goal):
+        self.fsm.setCurrentGoal(goal)
     
     def getCurrentImage(self):
         return self.fsm.getCurrentImage()
@@ -65,7 +67,6 @@ class Stream(QWidget):
         self.th.setMeasuredLeverAngle.connect(self.parent().parent().setMeasuredLeverAngle)
         self.th.setMeasuredLeverPosition.connect(self.parent().parent().setMeasuredLeverPosition)
         self.th.setEstLeverAngle.connect(self.parent().parent().setEstLeverAngle)
-        self.th.setCurrentGoalDisplay.connect(self.parent().parent().setCurrentGoalDisplay)
         self.th.setEstLeverPos.connect(self.parent().parent().setEstLeverPos)
         self.th.setLeverStatusIcon.connect(self.parent().parent().setLeverStatusIcon)
         self.th.start()

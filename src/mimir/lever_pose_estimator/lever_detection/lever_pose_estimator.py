@@ -62,19 +62,19 @@ class LeverPoseEstimator(object):
         self.previous_pos_est = [0, 0, 0]
 
     def estimatePoseFromCamStream(self, camera_stream, show_image=False):
-            image,_ = camera_stream.getImages()
-            corners, ids = self.detectArucoFromImg(image)
+        image,_ = camera_stream.getImages()
+        corners, ids = self.detectArucoFromImg(image)
 
-            stacked_corners, obj_p = self._sortObjAndCornerPnts(corners, ids)
-            if show_image:
-                image_corners = self.drawPointsOnImage(image, stacked_corners)
-                cv2.namedWindow('omx stream', cv2.WINDOW_NORMAL)
-                cv2.imshow('omx stream', image_corners)
-                cv2.waitKey(1)
+        stacked_corners, obj_p = self._sortObjAndCornerPnts(corners, ids)
+        if show_image:
+            image_corners = self.drawPointsOnImage(image, stacked_corners)
+            cv2.namedWindow('omx stream', cv2.WINDOW_NORMAL)
+            cv2.imshow('omx stream', image_corners)
+            cv2.waitKey(1)
 
-            angle, lp = self.getLeverPoseEstimate(corners, ids)
+        angle, lp = self.getLeverPoseEstimate(corners, ids)
 
-            return angle, lp
+        return angle, lp
 
     def detectArucoFromImg(self, image):
         '''
@@ -159,8 +159,8 @@ class LeverPoseEstimator(object):
 
         H_cam_eff = self.getCamToEffTransform()
 
-        self.omx_kinematics.setDHParams(self._getJointStates()[2:])
-        H_eff_w = self.omx_kinematics.getTransformFromEffToWorld()
+        self.omx_kinematics.set_DH_params(self._getJointStates()[2:])
+        H_eff_w = self.omx_kinematics.get_transform_from_eff_to_world()
 
         H_targ_w = H_eff_w @ H_cam_eff @ H_targ_cam
 
@@ -186,7 +186,9 @@ class LeverPoseEstimator(object):
         self.previous_angle_est = angle_est
 
         # Estimate lever position
-        lever_pos_obj = np.array([-1e-2, -2e-2, -10e-2])
+        # Lever position in object coordinates is measured
+        # lever_pos_obj = np.array([-1e-2, -2e-2, -10e-2])
+        lever_pos_obj = np.array([-5e-2, 0.85e-2, -9.5e-2])
         lever_pos_w = self._vecToInhomogeneous(H_targ_w @ self._vectorToHomogeneous(lever_pos_obj))
         self.previous_pos_est = lever_pos_w
 

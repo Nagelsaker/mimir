@@ -9,7 +9,7 @@ from mimir.msg import LeverPose
 from lever_detection.lever_pose_estimator import LeverPoseEstimator
 from mimir.Tyr.Comms.RealSenseCam import CameraStream
 
-def leverAnglePublisher(ip, port, cam_sn, camera_matrix):
+def leverAnglePublisher(ip, port, cam_sn, camera_matrix, show_stream=False):
     pub = rospy.Publisher('mimir/lever_angle_pose', LeverPose)
     rospy.init_node('lever_angle_publisher', anonymous=True)
     rate = rospy.Rate(10) # 10hz
@@ -36,13 +36,14 @@ def leverAnglePublisher(ip, port, cam_sn, camera_matrix):
             # print(f"Measured angle: {np.rad2deg(measured_angle):.2f}\t Data: {data}")
             
             try:
-                angle_est, pos_est = lever_pose_est.estimatePoseFromCamStream(camera_stream)
+                angle_est, pos_est = lever_pose_est.estimatePoseFromCamStream(camera_stream, show_image=show_stream)
             except:
                 angle_est = 0.
                 pos_est = [0., 0., 0.]
 
-            lever_pose.estimated_angle = -angle_est
+            lever_pose.estimated_angle = angle_est
             lever_pose.estimated_position = list(pos_est)
+            lever_pose.estimated_position[0] += 3e-2 # Add offset to x-position
             lever_pose.measured_angle = measured_angle
 
             # log_string = (f"\nEstimated angle: {np.rad2deg(lever_pose.estimated_angle):.2f}"
@@ -84,6 +85,6 @@ if __name__ == '__main__':
 
 
     try:
-        leverAnglePublisher(udp_ip, udp_port, cam_sn, camera_matrix)
+        leverAnglePublisher(udp_ip, udp_port, cam_sn, camera_matrix, show_stream=True)
     except rospy.ROSInterruptException:
         pass

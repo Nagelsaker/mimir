@@ -5,8 +5,8 @@ img_height: 1080
 sn_cam: "836612072676"
 sn_eff_cam: "838212074315"
 use_depth: True
-use_est_lever_state: False
-path_to_dataset: "data/dataset1/"
+use_est_lever_state: True
+path_to_dataset: "/home/simon/catkin_ws/src/mimir/src/mimir/Tyr/data/"
 path_to_graphics: "/graphics/"
 path_to_log: "/home/simon/catkin_ws/src/mimir/src/mimir/Tyr/log/"
 write_logs: True
