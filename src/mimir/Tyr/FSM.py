@@ -238,6 +238,7 @@ class FSM():
                     self.STATE = ST_RL_AGENT
                     
                     if np.abs(self.controller.pose["position"]["y"]) < 0.005:
+                        self.controller.updateRobotPose(updateX=True, updateY=True, updateZ=True)
                         # rospy.loginfo("STEPPING WITH AI")
                         # Activate RL Agent
                         time.sleep(1e-2)
@@ -345,7 +346,7 @@ class FSM():
                 writer.writerow(["None"])
                 return
             
-            writer.writerow(str(state))
+            writer.writerow([state])
 
 
     def logHandPoints(self, handPoints):

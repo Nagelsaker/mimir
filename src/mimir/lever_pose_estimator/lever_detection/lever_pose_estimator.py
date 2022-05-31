@@ -272,7 +272,6 @@ class LeverPoseEstimator(object):
         self.H_cam_eff = H_cam_eff
 
 
-
     def _makeTransformFromDHParams(theta, d, a, alpha):
         '''
         In:
