@@ -206,9 +206,9 @@ def plotLeverAndReward(cumulatedReward, successSeries, goalSeries, leverData, ti
     goal = np.rad2deg(goalSeries[goal_idx])
     plotLeverTrajectory2D(leverAngleMeasured, lever_length, T, goal, prefix)
     
-    fig, axs = plt.subplots(5,1)
-    fig.set_size_inches(10, 16.5)
-    fig.set_dpi(100)
+    fig, axs = plt.subplots(6,1)
+    fig.set_size_inches(10, 18.5)
+    fig.set_dpi(90)
     # Plot measured lever angle
     axs[0].plot(T, np.rad2deg(leverData[:,:2]))
     axs[0].legend([r"$\omega_{e}$", r"$\omega_{m}$"])
@@ -234,30 +234,39 @@ def plotLeverAndReward(cumulatedReward, successSeries, goalSeries, leverData, ti
     axs[1].yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
     axs[1].grid()
 
-    # Plot estimated lever position in z-axis
-    trueLeverPosZ = np.ones(len(leverData))*LEVER_POS[2]
-    axs[2].plot(T, np.vstack([leverData[:,4], trueLeverPosZ]).T)
-    axs[2].legend([r"$l_{z,e}$", r"$l_{z,m}$"])
-    axs[2].set(ylabel="Z-axis (m)")
-    axs[2].set_title("Estimated lever position along Z-axis")
+    # Plot estimated lever position in y-axis
+    trueLeverPosY = np.ones(len(leverData))*LEVER_POS[1]
+    axs[2].plot(T, np.vstack([leverData[:,3], trueLeverPosY]).T)
+    axs[2].legend([r"$l_{y,e}$", r"$l_{y,m}$"])
+    axs[2].set(ylabel="Y-axis (m)")
+    axs[2].set_title("Estimated lever position along Y-axis")
     axs[2].yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
     axs[2].grid()
 
-    # Plot cumulative reward
-    axs[3].plot(T, cumulatedReward, label=r"$reward$")
-    axs[3].legend()
-    axs[3].set(ylabel="Reward")
-    axs[3].set_title("Cumulative reward")
+    # Plot estimated lever position in z-axis
+    trueLeverPosZ = np.ones(len(leverData))*LEVER_POS[2]
+    axs[3].plot(T, np.vstack([leverData[:,4], trueLeverPosZ]).T)
+    axs[3].legend([r"$l_{z,e}$", r"$l_{z,m}$"])
+    axs[3].set(ylabel="Z-axis (m)")
+    axs[3].set_title("Estimated lever position along Z-axis")
     axs[3].yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
     axs[3].grid()
 
-    # Plot success series
-    axs[4].step(T, successSeries, label="Success")
+    # Plot cumulative reward
+    axs[4].plot(T, cumulatedReward, label=r"$reward$")
     axs[4].legend()
-    axs[4].set(ylabel="Success")
-    axs[4].set(xlabel="Time (s)")
-    axs[4].set_title("Goal reached?")
+    axs[4].set(ylabel="Reward")
+    axs[4].set_title("Cumulative reward")
+    axs[4].yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
     axs[4].grid()
+
+    # Plot success series
+    axs[5].step(T, successSeries, label="Success")
+    axs[5].legend()
+    axs[5].set(ylabel="Success")
+    axs[5].set(xlabel="Time (s)")
+    axs[5].set_title("Goal reached?")
+    axs[5].grid()
 
     # plt.show()
     plt.savefig(f"{prefix}_Lever_And_Reward.eps")
@@ -466,8 +475,8 @@ if __name__ == "__main__":
 
     # # Plotting Pose:
 
-    prefix = "/home/simon/catkin_ws/src/mimir/src/mimir/Tyr/log/success_using_estimate/21_2022_05_23_"
-    # prefix = "/home/simon/catkin_ws/src/mimir/src/mimir/Tyr/log/success/9_2022_05_23_"
+    # prefix = "/home/simon/catkin_ws/src/mimir/src/mimir/Tyr/log/success_using_estimate/21_2022_05_23_"
+    prefix = "/home/simon/catkin_ws/src/mimir/src/mimir/Tyr/log/success/9_2022_05_23_"
     poseData = loadRobotPoses(f"{prefix}RobotPoseLogger.csv")
     leverData = loadLeverData(f"{prefix}LeverPoseLogger.csv")
     stateData = loadFSMStates(f"{prefix}FSMStateLogger.csv")
